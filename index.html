@@ -43,49 +43,32 @@
                 <!-- Waluty Feed -->
                 <div class="iframe-wrapper">
                     <div class="iframe-header">
-                        <span class="iframe-title">Waluty</span>
+                        <span class="iframe-title">Code Editor</span>
+                        <div class="panel-tabs">
+                            <button class="tab active">main.py</button>
+                            <button class="tab">config.json</button>
+                            <button class="tab">utils.py</button>
+                            <button class="tab-add">+</button>
+                        </div>
                         <div class="header-controls">
-                            <button class="refresh-btn" id="refresh-rates" title="Odśwież kursy">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
-                            <button class="fullscreen-btn" title="Pełny ekran">
+                            <div class="panel-actions">
+                                <button class="action-btn" title="Run"><i class="fas fa-play"></i></button>
+                                <button class="action-btn" title="Debug"><i class="fas fa-bug"></i></button>
+                                <button class="action-btn" title="Settings"><i class="fas fa-cog"></i></button>
+                            </div>
+                            <button class="fullscreen-btn" title="Toggle fullscreen">
                                 <i class="fas fa-expand"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="currency-panel">
-                        <div class="currency-view-toggle">
-                            <button class="view-btn active" data-view="grid">Siatka</button>
-                            <button class="view-btn" data-view="chart">Wykres</button>
+                    <div class="code-editor">
+                        <div class="line-numbers">
+                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
                         </div>
-                        
-                        <div class="currency-grid-view" id="currency-grid">
-                            <div class="currency-grid" id="currency-rates">
-                                <div class="currency-loading">
-                                    <i class="fas fa-spinner fa-spin"></i> Ładowanie kursów...
-                                </div>
-                            </div>
-                            <div class="currency-update-time">
-                                Ostatnia aktualizacja: <span id="last-updated">-</span>
-                            </div>
-                        </div>
-                        
-                        <div class="chart-view" id="chart-view" style="display: none;">
-                            <div class="chart-container">
-                                <canvas id="currency-chart"></canvas>
-                            </div>
-                            <div class="chart-controls">
-                                <select id="currency-select" class="currency-select">
-                                    <option value="">Wybierz walutę</option>
-                                </select>
-                                <div class="chart-period">
-                                    <button class="period-btn active" data-days="7">7 dni</button>
-                                    <button class="period-btn" data-days="14">14 dni</button>
-                                    <button class="period-btn" data-days="30" data-days="30">30 dni</button>
-                                </div>
-                            </div>
-                        </div>
+                        <pre><code><span class="keyword">def</span> <span class="function">main</span>():<br>    <span class="string">"""Main application entry point."""</span><br>    <span class="keyword">print</span>(<span class="string">"Hello, Arch Linux!"</span>)<br><br><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:<br>    main()</code></pre>
                     </div>
+
+
                 </div>
 
                 <!-- Terminal -->
@@ -156,30 +139,51 @@
             <div class="right-column">
                 <!-- Main panel (top) -->
                 <div class="iframe-wrapper" id="panel1">
+
+
                     <div class="iframe-header">
-                        <span class="iframe-title">Code Editor</span>
-                        <div class="panel-tabs">
-                            <button class="tab active">main.py</button>
-                            <button class="tab">config.json</button>
-                            <button class="tab">utils.py</button>
-                            <button class="tab-add">+</button>
-                        </div>
+                        <span class="iframe-title">Waluty</span>
                         <div class="header-controls">
-                            <div class="panel-actions">
-                                <button class="action-btn" title="Run"><i class="fas fa-play"></i></button>
-                                <button class="action-btn" title="Debug"><i class="fas fa-bug"></i></button>
-                                <button class="action-btn" title="Settings"><i class="fas fa-cog"></i></button>
-                            </div>
-                            <button class="fullscreen-btn" title="Toggle fullscreen">
+                            <button class="refresh-btn" id="refresh-rates" title="Odśwież kursy">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="fullscreen-btn" title="Pełny ekran">
                                 <i class="fas fa-expand"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="code-editor">
-                        <div class="line-numbers">
-                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+                    <div class="currency-panel">
+                        <div class="currency-view-toggle">
+                            <button class="view-btn active" data-view="grid">Siatka</button>
+                            <button class="view-btn" data-view="chart">Wykres</button>
                         </div>
-                        <pre><code><span class="keyword">def</span> <span class="function">main</span>():<br>    <span class="string">"""Main application entry point."""</span><br>    <span class="keyword">print</span>(<span class="string">"Hello, Arch Linux!"</span>)<br><br><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:<br>    main()</code></pre>
+                        
+                        <div class="currency-grid-view" id="currency-grid">
+                            <div class="currency-grid" id="currency-rates">
+                                <div class="currency-loading">
+                                    <i class="fas fa-spinner fa-spin"></i> Ładowanie kursów...
+                                </div>
+                            </div>
+                            <div class="currency-update-time">
+                                Ostatnia aktualizacja: <span id="last-updated">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-view" id="chart-view" style="display: none;">
+                            <div class="chart-container">
+                                <canvas id="currency-chart"></canvas>
+                            </div>
+                            <div class="chart-controls">
+                                <select id="currency-select" class="currency-select">
+                                    <option value="">Wybierz walutę</option>
+                                </select>
+                                <div class="chart-period">
+                                    <button class="period-btn active" data-days="7">7 dni</button>
+                                    <button class="period-btn" data-days="14">14 dni</button>
+                                    <button class="period-btn" data-days="30" data-days="30">30 dni</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
