@@ -130,8 +130,12 @@ body {
 /* Main container with two columns */
 .main-container {
     display: flex;
-    height: calc(100vh - 32px);
+    flex: 1;
     gap: 16px;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
     position: relative;
     background: var(--bg-secondary);
     border-radius: 12px;
@@ -142,13 +146,13 @@ body {
 
 /* Left column - 25% width */
 .left-column {
-    width: 300px;
-    min-width: 300px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    overflow-y: auto;
-    padding-right: 8px;
+    flex: 0 0 25%;
+    min-height: 0;
+    width: 25%;
+    min-width: 25%;
+    max-width: 25%;
 }
 
 /* Right column - remaining width */
@@ -157,6 +161,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-height: 0;
     min-width: 0;
 }
 
@@ -178,8 +183,12 @@ body {
 /* Panels 4 & 5 - Side by side in right column */
 .panels-row {
     display: flex;
-    gap: 10px;
-    height: 40%;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
 }
 
 /* Panel Styles */
@@ -209,6 +218,8 @@ body {
     padding: 0 !important;
     max-height: none !important;
     min-height: auto !important;
+    max-width: none !important;
+    min-width: auto !important;
 }
 
 .iframe-wrapper:hover {
@@ -223,6 +234,13 @@ body {
     min-height: 300px;
 }
 
+.panels-row > .iframe-wrapper {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
 .main-container > .iframe-wrapper {
     flex: 1;
     min-height: 200px;
@@ -233,14 +251,18 @@ body {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 0; /* Allows flex children to shrink below their minimum content size */
+    min-height: 0;
+    margin-bottom: 16px;
+    height: auto;
+    width: 100%;
 }
 
 .left-column .iframe-wrapper {
     flex: 1;
-    min-height: 0; /* Allows the panel to be smaller than its content */
+    min-height: 0;
     margin-bottom: 16px;
-    height: auto; /* Remove fixed height */
+    height: auto;
+    width: 100%;
 }
 
 .left-column .iframe-wrapper:last-child {
