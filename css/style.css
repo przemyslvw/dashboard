@@ -75,6 +75,7 @@ body {
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease;
+    position: relative;
 }
 
 .iframe-wrapper:hover {
@@ -95,12 +96,21 @@ body {
 
 /* Header iframe */
 .iframe-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(102, 126, 234, 0.0);
     padding: 8px 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-shrink: 0;
+    z-index: 10;
+    transition: background-color 0.3s ease;
+}
+
+.iframe-header:hover {
+    background: rgba(102, 126, 234, 0.5);
 }
 
 .iframe-title {
@@ -127,9 +137,11 @@ body {
 /* Iframe */
 iframe {
     width: 100%;
-    flex: 1;
+    height: 100%;
     border: none;
     background: white;
+    position: relative;
+    z-index: 1;
 }
 
 /* Modal */
