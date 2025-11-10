@@ -54,13 +54,36 @@
                         </div>
                     </div>
                     <div class="currency-panel">
-                        <div class="currency-grid" id="currency-rates">
-                            <div class="currency-loading">
-                                <i class="fas fa-spinner fa-spin"></i> Ładowanie kursów...
+                        <div class="currency-view-toggle">
+                            <button class="view-btn active" data-view="grid">Siatka</button>
+                            <button class="view-btn" data-view="chart">Wykres</button>
+                        </div>
+                        
+                        <div class="currency-grid-view" id="currency-grid">
+                            <div class="currency-grid" id="currency-rates">
+                                <div class="currency-loading">
+                                    <i class="fas fa-spinner fa-spin"></i> Ładowanie kursów...
+                                </div>
+                            </div>
+                            <div class="currency-update-time">
+                                Ostatnia aktualizacja: <span id="last-updated">-</span>
                             </div>
                         </div>
-                        <div class="currency-update-time">
-                            Ostatnia aktualizacja: <span id="last-updated">-</span>
+                        
+                        <div class="chart-view" id="chart-view" style="display: none;">
+                            <div class="chart-container">
+                                <canvas id="currency-chart"></canvas>
+                            </div>
+                            <div class="chart-controls">
+                                <select id="currency-select" class="currency-select">
+                                    <option value="">Wybierz walutę</option>
+                                </select>
+                                <div class="chart-period">
+                                    <button class="period-btn active" data-days="7">7 dni</button>
+                                    <button class="period-btn" data-days="14">14 dni</button>
+                                    <button class="period-btn" data-days="30" data-days="30">30 dni</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -198,6 +221,7 @@
 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     
     </script>
