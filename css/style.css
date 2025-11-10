@@ -192,6 +192,7 @@ body {
 /* Panel 1 - Full width in right column */
 #panel1 {
     height: 60%;
+    padding-top: 35px;
 }
 
 /* Panels 4 & 5 - Side by side in right column */

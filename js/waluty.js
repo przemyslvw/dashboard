@@ -121,7 +121,7 @@ function createCurrencyItem({ code, name, flag, rate, change, amount = 1 }) {
         `${changeSymbol} ${Math.abs(change).toFixed(2)}%` : '-';
         
     return `
-        <div class="currency-item">
+        <div class="currency-item" data-currency="${code}">
             <div class="currency-flag">${flag}</div>
             <div class="currency-code">${code}</div>
             <div class="currency-name">${name}</div>
@@ -505,16 +505,23 @@ document.addEventListener('DOMContentLoaded', () => {
         currencyGrid.classList.add('hidden');
         chartView.style.display = 'block'; // Make sure it's visible
         
-        // Create the chart HTML structure
+        // Get the current currency name and flag
+        const currency = currencies.find(c => c.code === currentCurrency);
+        const currencyName = currency ? currency.name : '';
+        const currencyFlag = currency ? currency.flag : '';
+        
+        // Create the chart HTML structure with back button
         const chartHTML = `
-            <div class="chart-container" style="position: relative; height: 100%; width: 100%;">
+            <div class="chart-header">
+                <button id="back-to-grid" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Wróć do listy
+                </button>
+                <h3>${currencyFlag} ${currencyName} (${currentCurrency})</h3>
+            </div>
+            <div class="chart-container" style="position: relative; height: calc(100% - 50px); width: 100%;">
                 <canvas id="currency-chart"></canvas>
             </div>
             <div class="chart-controls">
-                <select id="currency-select" class="currency-select">
-                    <option value="">Wybierz walutę</option>
-                    ${currencies.map(c => `<option value="${c.code}">${c.flag} ${c.name} (${c.code})</option>`).join('')}
-                </select>
                 <div class="chart-period">
                     <button class="period-btn active" data-days="7">7 dni</button>
                     <button class="period-btn" data-days="14">14 dni</button>
@@ -541,8 +548,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         
-        // Start checking for the select element
-        checkSelect();
+        // Set up back button
+        document.getElementById('back-to-grid').addEventListener('click', () => {
+            chartView.style.display = 'none';
+            currencyGrid.classList.remove('hidden');
+        });
+        
+        // Initialize the chart with the current currency
+        updateChart(currentCurrency, currentDays).catch(console.error);
     }
     
     function showGridView() {
@@ -550,54 +563,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('chart-view').classList.add('hidden');
     }
 
-    // View toggle with event delegation and better error handling
+        // Handle currency item clicks
     document.addEventListener('click', (e) => {
-        console.log('Click event:', e.target);
-        const viewBtn = e.target.closest('.view-btn');
-        if (!viewBtn) {
-            console.log('Not a view button click');
-            return;
-        }
-        
-        console.log('View button clicked:', viewBtn.dataset.view);
-        
-        try {
-            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-            viewBtn.classList.add('active');
-            
-            if (viewBtn.dataset.view === 'chart') {
-                console.log('Showing chart view');
+        const currencyItem = e.target.closest('.currency-item');
+        if (currencyItem) {
+            const currencyCode = currencyItem.dataset.currency;
+            if (currencyCode) {
+                currentCurrency = currencyCode;
                 showChartView();
-            } else {
-                console.log('Showing grid view');
-                showGridView();
             }
-        } catch (error) {
-            console.error('Error in view toggle:', error);
         }
     });
-    
-    // Set up view toggle buttons
-    const viewButtons = document.querySelectorAll('.view-btn');
-    viewButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            viewButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            if (btn.dataset.view === 'chart') {
-                showChartView();
-            } else {
-                document.getElementById('currency-grid').classList.remove('hidden');
-                document.getElementById('chart-view').classList.add('hidden');
-            }
-        });
-    });
-    
-    // If chart view is active by default, initialize it
-    const activeViewBtn = document.querySelector('.view-btn.active');
-    if (activeViewBtn && activeViewBtn.dataset.view === 'chart') {
-        showChartView();
-    }
 
     // Currency select change
     document.getElementById('currency-select').addEventListener('change', (e) => {
