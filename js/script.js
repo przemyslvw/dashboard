@@ -9,16 +9,94 @@ const defaultUrls = {
 
 // Funkcja do załadowania zapisanych URL-i z localStorage
 function loadSavedUrls() {
+    // Map of panel numbers to their element selectors
+    const panelElements = {
+        1: { selector: '#iframe1', type: 'iframe' },
+        2: { selector: '.left-column img', type: 'img' },
+        3: { selector: '#iframe3', type: 'iframe' },
+        4: { selector: '#iframe4', type: 'iframe' },
+        5: { selector: '#iframe5', type: 'iframe' }
+    };
+
     for (let i = 1; i <= 5; i++) {
+        console.log(`Processing panel ${i}...`);
         const savedUrl = localStorage.getItem(`iframe${i}Url`);
-        const iframe = document.getElementById(`iframe${i}`);
+        const panel = panelElements[i];
+        
+        if (!panel) {
+            console.error(`No configuration found for panel ${i}`);
+            continue;
+        }
+        
+        console.log(`Panel ${i} selector:`, panel.selector);
+        const element = document.querySelector(panel.selector);
         const urlInput = document.getElementById(`url${i}`);
         
-        if (savedUrl) {
-            iframe.src = savedUrl;
-            urlInput.value = savedUrl;
-        } else {
-            iframe.src = defaultUrls[`iframe${i}`];
+        if (!element) {
+            console.error(`Element not found for panel ${i} with selector: ${panel.selector}`);
+            continue;
+        }
+        
+        if (!urlInput) {
+            console.error(`URL input not found for panel ${i} (url${i})`);
+            continue;
+        }
+        
+        const urlToSet = savedUrl || defaultUrls[`iframe${i}`];
+        
+        try {
+            if (panel.type === 'img') {
+                console.log(`Initializing image panel ${i}`);
+                const handleImageLoad = (url) => {
+                    console.log(`Loading image for panel ${i} from:`, url);
+                    const img = new Image();
+                    img.onerror = () => {
+                        console.warn(`Panel ${i}: Failed to load image from URL:`, url);
+                        // If the URL is different from default and fails, try the default URL
+                        if (url !== defaultUrls[`iframe${i}`]) {
+                            console.log(`Trying default URL for panel ${i}`);
+                            handleImageLoad(defaultUrls[`iframe${i}`]);
+                        } else {
+                            // If default URL also fails, set empty source
+                            console.log(`Panel ${i}: Both URLs failed, clearing source`);
+                            if (element) element.src = '';
+                            if (urlInput) urlInput.value = url || '';
+                        }
+                    };
+                    img.onload = () => {
+                        console.log(`Panel ${i}: Image loaded successfully from:`, url);
+                        // Only update if the URL is still relevant and elements exist
+                        if ((url === urlToSet || url === defaultUrls[`iframe${i}`]) && element && urlInput) {
+                            element.src = url;
+                            urlInput.value = url;
+                        }
+                    };
+                    try {
+                        img.src = url;
+                    } catch (error) {
+                        console.error(`Panel ${i}: Error setting image source:`, error);
+                    }
+                };
+                
+                // Start loading the image if we have a URL
+                if (urlToSet) {
+                    handleImageLoad(urlToSet);
+                } else {
+                    console.warn(`Panel ${i}: No URL to load`);
+                }
+            } else {
+                // For iframes
+                if (element.tagName === 'IFRAME') {
+                    element.src = urlToSet;
+                    urlInput.value = urlToSet;
+                } else {
+                    console.warn(`Element for panel ${i} is not an iframe`);
+                }
+            }
+        } catch (error) {
+            console.error(`Error loading URL for panel ${i}:`, error);
+            // Fallback to default URL in case of error
+            element.src = defaultUrls[`iframe${i}`];
             urlInput.value = defaultUrls[`iframe${i}`];
         }
     }
@@ -44,9 +122,17 @@ function saveUrls() {
 function resetUrls() {
     if (confirm('Czy na pewno chcesz zresetować wszystkie URL-e do wartości domyślnych?')) {
         for (let i = 1; i <= 5; i++) {
+            const element = i === 2 
+                ? document.querySelector('.left-column img')
+                : document.getElementById(`iframe${i}`);
+            const urlInput = document.getElementById(`url${i}`);
+            
+            if (!element || !urlInput) continue;
+            
             localStorage.removeItem(`iframe${i}Url`);
-            document.getElementById(`iframe${i}`).src = defaultUrls[`iframe${i}`];
-            document.getElementById(`url${i}`).value = defaultUrls[`iframe${i}`];
+            const defaultUrl = defaultUrls[`iframe${i}`];
+            element.src = defaultUrl;
+            urlInput.value = defaultUrl;
         }
         showNotification('🔄 Ustawienia zresetowane!', 'info');
     }
@@ -54,11 +140,16 @@ function resetUrls() {
 
 // Funkcja do odświeżania iframe
 function refreshIframe(iframeNumber) {
-    const iframe = document.getElementById(`iframe${iframeNumber}`);
-    const currentSrc = iframe.src;
-    iframe.src = '';
+    const element = iframeNumber === 2 
+        ? document.querySelector('.left-column img')
+        : document.getElementById(`iframe${iframeNumber}`);
+        
+    if (!element) return;
+    
+    const currentSrc = element.src;
+    element.src = '';
     setTimeout(() => {
-        iframe.src = currentSrc;
+        element.src = currentSrc;
     }, 100);
     showNotification(`🔄 Panel ${iframeNumber} odświeżony!`, 'info');
 }
