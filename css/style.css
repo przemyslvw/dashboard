@@ -26,13 +26,15 @@ body {
 /* Header */
 .header {
     background: rgba(255, 255, 255, 0.95);
-    padding: 15px 20px;
+    padding: 15px 20px 15px 60px; /* Added left padding to make space for the fixed button */
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
+    position: relative;
+    z-index: 900;
 }
 
 .header h1 {
@@ -42,12 +44,17 @@ body {
 }
 
 .settings-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
     background: #667eea;
     border: none;
     padding: 10px 15px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 20px;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
 }
 
