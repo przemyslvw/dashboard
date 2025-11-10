@@ -12,6 +12,7 @@ const currencies = [
     { code: 'SEK', name: 'Korona szwedzka', flag: '🇸🇪' },
     { code: 'BTC', name: 'Bitcoin', flag: '₿', isCrypto: true },
     { code: 'ETH', name: 'Ethereum', flag: '⟠', isCrypto: true },
+    { code: 'NVDA', name: 'Nvidia Corp', flag: '🎮', isStock: true }
 ];
 
 // Chart instance
@@ -33,10 +34,19 @@ async function fetchExchangeRates() {
     currencyGrid.innerHTML = '<div class="currency-loading"><i class="fas fa-spinner fa-spin"></i> Ładowanie kursów...</div>';
     
     try {
-        // Get BTC rate from CoinGecko
-        const btcResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=pln');
-        const btcData = await btcResponse.json();
-        const btcRate = btcData.bitcoin.pln;
+        // Get crypto and stock rates from CoinGecko
+        const [btcResponse, nvdaResponse] = await Promise.all([
+            fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=pln'),
+            fetch('https://api.coingecko.com/api/v3/simple/price?ids=nvidia&vs_currencies=usd')
+        ]);
+        
+        const [btcData, nvdaData] = await Promise.all([
+            btcResponse.json(),
+            nvdaResponse.json()
+        ]);
+        
+        const btcRate = btcData.bitcoin?.pln;
+        const nvdaPrice = nvdaData.nvidia?.usd;
         
         // Get other currencies from NBP
         const response = await fetch('https://api.nbp.pl/api/exchangerates/tables/A/');
@@ -68,17 +78,35 @@ async function fetchExchangeRates() {
         currencies.forEach(currency => {
             if (currency.isCrypto) {
                 // Handle crypto currencies
+                const rate = currency.code === 'BTC' ? btcRate : 
+                            currency.code === 'ETH' ? btcRate * 0.06 : 0; // Przykładowy kurs ETH
                 const change = previousRates[currency.code] ? 
-                    calculateChange(btcRate, previousRates[currency.code]) : 0;
+                    calculateChange(rate, previousRates[currency.code]) : 0;
                 
                 html += createCurrencyItem({
                     ...currency,
-                    rate: btcRate,
+                    rate: rate,
                     change: change
                 });
                 
                 // Update previous rate for next time
-                previousRates[currency.code] = btcRate;
+                previousRates[currency.code] = rate;
+            } else if (currency.isStock) {
+                // Handle stocks
+                if (currency.code === 'NVDA' && nvdaPrice) {
+                    const change = previousRates['NVDA'] ? 
+                        calculateChange(nvdaPrice, previousRates['NVDA']) : 0;
+                    
+                    html += createCurrencyItem({
+                        ...currency,
+                        rate: nvdaPrice,
+                        change: change,
+                        symbol: '$', // Dodajemy symbol waluty dla akcji
+                        isStock: true
+                    });
+                    
+                    previousRates['NVDA'] = nvdaPrice;
+                }
             } else {
                 // Handle fiat currencies
                 const rateData = rates.find(r => r.code === currency.code);
@@ -112,20 +140,26 @@ async function fetchExchangeRates() {
     }
 }
         
-function createCurrencyItem({ code, name, flag, rate, change, amount = 1 }) {
-    const displayRate = (code === 'BTC' ? rate : rate).toFixed(4);
+function createCurrencyItem({ code, name, flag, rate, change, amount = 1, symbol = '', isStock = false }) {
+    const displayRate = rate ? rate.toFixed(2) : '0.00';
     const displayAmount = amount > 1 ? amount + ' ' : '';
     const changeClass = change > 0 ? 'positive' : change < 0 ? 'negative' : '';
     const changeSymbol = change > 0 ? '↑' : change < 0 ? '↓' : '';
     const changeText = change !== 0 ? 
         `${changeSymbol} ${Math.abs(change).toFixed(2)}%` : '-';
+    
+    // Domyślna waluta to PLN, chyba że to akcja (wtedy $) lub inna waluta
+    const currencySymbol = isStock ? '$' : (symbol || 'PLN');
+    const displayValue = isStock ? 
+        `${currencySymbol}${displayRate}` : 
+        `${displayAmount}${displayRate} ${currencySymbol}`;
         
     return `
         <div class="currency-item" data-currency="${code}">
             <div class="currency-flag">${flag}</div>
             <div class="currency-code">${code}</div>
             <div class="currency-name">${name}</div>
-            <div class="currency-rate">${displayAmount}${displayRate} PLN</div>
+            <div class="currency-rate">${displayValue}</div>
             <div class="currency-change ${changeClass}">${changeText}</div>
         </div>
     `;
@@ -158,6 +192,35 @@ async function fetchHistoricalRates(currencyCode, days) {
         console.log(`Date range: ${startDateStr} to ${endDateStr}`);
         
         let rates = [];
+        
+        // For NVDA stock
+        if (currencyCode === 'NVDA') {
+            const response = await fetch(`https://api.coingecko.com/api/v3/coins/nvidia/market_chart/range?vs_currency=usd&from=${Math.floor(startDate.getTime() / 1000)}&to=${Math.floor(endDate.getTime() / 1000)}`);
+            const data = await response.json();
+            
+            if (!data.prices || !Array.isArray(data.prices)) {
+                console.error('Invalid data format for NVDA from CoinGecko API');
+                return [];
+            }
+            
+            // Pobieramy tylko jedną wartość dziennie (pierwszą z danego dnia)
+            const dailyPrices = {};
+            data.prices.forEach(priceData => {
+                const date = new Date(priceData[0]).toISOString().split('T')[0];
+                if (!dailyPrices[date]) {
+                    dailyPrices[date] = priceData[1];
+                }
+            });
+            
+            // Konwertujemy obiekt z powrotem na tablicę
+            rates = Object.entries(dailyPrices).map(([date, value]) => ({
+                date: date,
+                value: value
+            }));
+            
+            console.log(`Fetched ${rates.length} NVDA rate points`);
+            return rates;
+        }
         
         // For BTC, use CoinGecko API
         if (currencyCode === 'BTC') {
