@@ -5,7 +5,8 @@ const defaultUrls = {
     iframe3: 'https://www.example.com',
     iframe4: 'https://www.example.com',
     iframe5: 'https://www.example.com',
-    iframe6: 'https://www.example.com'
+    iframe6: 'https://www.example.com',
+    iframe7: 'https://www.example.com'
 };
 
 // Funkcja do załadowania zapisanych URL-i z localStorage
@@ -17,7 +18,8 @@ function loadSavedUrls() {
         3: { selector: '#iframe3', type: 'iframe' },
         4: { selector: '#iframe4', type: 'iframe' },
         5: { selector: '#iframe5', type: 'iframe' },
-        6: { selector: '#iframe6', type: 'iframe' }
+        6: { selector: '#iframe6', type: 'iframe' },
+        7: { selector: '#iframe7', type: 'iframe' }
     };
 
     for (let i = 1; i <= 6; i++) {
