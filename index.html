@@ -1,131 +1,273 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Danych w Czasie Rzeczywistym</title>
+    <title>Arch Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
     <div class="container">
-        <button id="settingsBtn" class="settings-btn" title="Ustawienia URL">⚙️</button>
+        <button id="settingsBtn" class="settings-btn" title="Settings">
+            <i class="fas fa-cog"></i>
+        </button>
 
         <div class="main-container">
-            <!-- Left column - 25% width -->
+            <!-- Left sidebar -->
             <div class="left-column">
-                <!-- Panel 2 -->
+                <!-- System Stats -->
                 <div class="iframe-wrapper">
                     <div class="iframe-header">
-                        <span class="iframe-title">Panel 2</span>
-                        <button class="refresh-btn" data-iframe="2" title="Odśwież">🔄</button>
+                        <span class="iframe-title">System Status</span>
+                        <button class="refresh-btn" data-iframe="stats" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                     </div>
-                    <img src="https://192.168.0.237:8080/video" alt="Video stream" class="transparent shrinkToFit">
+                    <div id="system-stats" class="terminal">
+                        <div class="terminal-line">$ <span class="command">neofetch --stdout</span></div>
+                        <div class="terminal-line">OS: Arch Linux x86_64</div>
+                        <div class="terminal-line">Host: Custom Desktop</div>
+                        <div class="terminal-line">Kernel: 6.5.0-arch1-1</div>
+                        <div class="terminal-line">Uptime: 2d 4h 32m</div>
+                        <div class="terminal-line">CPU: AMD Ryzen 9 5900X (24) @ 3.7GHz</div>
+                        <div class="terminal-line">Memory: 16GB / 32GB</div>
+                        <div class="terminal-line">Disk: 1.2TB / 2.0TB</div>
+                    </div>
                 </div>
 
-                <!-- Panel 3 -->
+                <!-- Camera Feed -->
                 <div class="iframe-wrapper">
                     <div class="iframe-header">
-                        <span class="iframe-title">Panel 3</span>
-                        <button class="refresh-btn" data-iframe="3" title="Odśwież">🔄</button>
+                        <span class="iframe-title">Camera Feed</span>
+                        <button class="refresh-btn" data-iframe="camera" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                     </div>
-                    <iframe id="iframe3" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
+                    <img src="https://192.168.0.237:8080/video" alt="Video stream" class="camera-feed">
                 </div>
 
-                <!-- Panel 6 -->
+                <!-- Terminal -->
                 <div class="iframe-wrapper">
                     <div class="iframe-header">
-                        <span class="iframe-title">Panel 6</span>
-                        <button class="refresh-btn" data-iframe="6" title="Odśwież">🔄</button>
+                        <span class="iframe-title">Terminal</span>
+                        <div class="terminal-controls">
+                            <button class="terminal-btn" title="New Tab"><i class="fas fa-plus"></i></button>
+                            <button class="terminal-btn" title="Clear"><i class="fas fa-eraser"></i></button>
+                        </div>
                     </div>
-                    <iframe id="iframe6" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
-                </div>
-
-                <!-- Panel 7 -->
-                <div class="iframe-wrapper">
-                    <div class="iframe-header">
-                        <span class="iframe-title">Panel 7</span>
-                        <button class="refresh-btn" data-iframe="7" title="Odśwież">🔄</button>
+                    <div class="terminal" id="terminal">
+                        <div class="terminal-line">$ <span class="cursor">_</span></div>
                     </div>
-                    <iframe id="iframe7" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>
 
-            <!-- Right column - 75% width -->
+            <!-- Main content area -->
             <div class="right-column">
-                <!-- Panel 1 - Full width at the top -->
+                <!-- Main panel (top) -->
                 <div class="iframe-wrapper" id="panel1">
                     <div class="iframe-header">
-                        <span class="iframe-title">Panel 1</span>
-                        <button class="refresh-btn" data-iframe="1" title="Odśwież">🔄</button>
+                        <span class="iframe-title">Code Editor</span>
+                        <div class="panel-tabs">
+                            <button class="tab active">main.py</button>
+                            <button class="tab">config.json</button>
+                            <button class="tab">utils.py</button>
+                            <button class="tab-add">+</button>
+                        </div>
+                        <div class="panel-actions">
+                            <button class="action-btn" title="Run"><i class="fas fa-play"></i></button>
+                            <button class="action-btn" title="Debug"><i class="fas fa-bug"></i></button>
+                            <button class="action-btn" title="Settings"><i class="fas fa-cog"></i></button>
+                        </div>
                     </div>
-                    <iframe id="iframe1" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
+                    <div class="code-editor">
+                        <div class="line-numbers">
+                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+                        </div>
+                        <pre><code><span class="keyword">def</span> <span class="function">main</span>():<br>    <span class="string">"""Main application entry point."""</span><br>    <span class="keyword">print</span>(<span class="string">"Hello, Arch Linux!"</span>)<br><br><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:<br>    main()</code></pre>
+                    </div>
                 </div>
 
-                <!-- Panels 4 & 5 - Side by side at the bottom -->
+                <!-- Bottom panels -->
                 <div class="panels-row">
-                    <!-- Panel 4 -->
+                    <!-- File Explorer -->
                     <div class="iframe-wrapper">
                         <div class="iframe-header">
-                            <span class="iframe-title">Panel 4</span>
-                            <button class="refresh-btn" data-iframe="4" title="Odśwież">🔄</button>
+                            <span class="iframe-title">File Explorer</span>
+                            <div class="explorer-actions">
+                                <button class="explorer-btn" title="New File"><i class="far fa-file"></i></button>
+                                <button class="explorer-btn" title="New Folder"><i class="far fa-folder"></i></button>
+                                <button class="explorer-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+                            </div>
                         </div>
-                        <iframe id="iframe4" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
+                        <div class="file-explorer">
+                            <div class="file-item selected">
+                                <i class="fab fa-python"></i> main.py
+                            </div>
+                            <div class="file-item">
+                                <i class="fab fa-js"></i> script.js
+                            </div>
+                            <div class="file-item">
+                                <i class="fab fa-html5"></i> index.html
+                            </div>
+                            <div class="file-item">
+                                <i class="fab fa-css3-alt"></i> style.css
+                            </div>
+                            <div class="folder">
+                                <div class="folder-header">
+                                    <i class="fas fa-chevron-right"></i>
+                                    <i class="far fa-folder"></i> assets
+                                </div>
+                                <div class="folder-contents">
+                                    <div class="file-item">
+                                        <i class="fas fa-image"></i> logo.png
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Panel 5 -->
+                    <!-- Output / Terminal -->
                     <div class="iframe-wrapper">
                         <div class="iframe-header">
-                            <span class="iframe-title">Panel 5</span>
-                            <button class="refresh-btn" data-iframe="5" title="Odśwież">🔄</button>
+                            <span class="iframe-title">Output</span>
+                            <div class="output-tabs">
+                                <button class="tab active">Terminal</button>
+                                <button class="tab">Problems</button>
+                                <button class="tab">Debug Console</button>
+                            </div>
                         </div>
-                        <iframe id="iframe5" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
+                        <div class="output-panel">
+                            <div class="terminal-line">$ python main.py</div>
+                            <div class="terminal-line">Hello, Arch Linux!</div>
+                            <div class="terminal-line">$ <span class="cursor">_</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        </main>
     </div>
 
-    <!-- Modal do ustawień URL -->
+    <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Konfiguracja URL Iframe-ów</h2>
+                <h2>Settings</h2>
                 <button class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="url-input-group">
-                    <label for="url1">Panel 1 URL:</label>
-                    <input type="url" id="url1" placeholder="https://example.com">
+                <div class="settings-tabs">
+                    <button class="tab active" data-tab="general">General</button>
+                    <button class="tab" data-tab="appearance">Appearance</button>
+                    <button class="tab" data-tab="shortcuts">Shortcuts</button>
+                    <button class="tab" data-tab="extensions">Extensions</button>
                 </div>
-                <div class="url-input-group">
-                    <label for="url2">Panel 2 URL:</label>
-                    <input type="url" id="url2" placeholder="https://example.com">
-                </div>
-                <div class="url-input-group">
-                    <label for="url3">Panel 3 URL:</label>
-                    <input type="url" id="url3" placeholder="https://example.com">
-                </div>
-                <div class="url-input-group">
-                    <label for="url4">Panel 4 URL:</label>
-                    <input type="url" id="url4" placeholder="https://example.com">
-                </div>
-                <div class="url-input-group">
-                    <label for="url5">Panel 5 URL:</label>
-                    <input type="url" id="url5" placeholder="https://example.com">
-                </div>
-                <div class="url-input-group">
-                    <label for="url6">Panel 6 URL:</label>
-                    <input type="url" id="url6" placeholder="https://example.com">
+                
+                <div class="settings-content">
+                    <div class="settings-pane active" id="general">
+                        <h3>General Settings</h3>
+                        <div class="form-group">
+                            <label for="theme">Theme</label>
+                            <select id="theme" class="form-control">
+                                <option value="dark">Dark (Default)</option>
+                                <option value="light">Light</option>
+                                <option value="solarized">Solarized Dark</option>
+                                <option value="monokai">Monokai</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fontFamily">Font Family</label>
+                            <select id="fontFamily" class="form-control">
+                                <option value="Fira Code">Fira Code</option>
+                                <option value="JetBrains Mono">JetBrains Mono</option>
+                                <option value="Source Code Pro">Source Code Pro</option>
+                                <option value="Hack">Hack</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fontSize">Font Size</label>
+                            <input type="range" id="fontSize" min="10" max="24" value="14" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-pane" id="appearance">
+                        <h3>Appearance</h3>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="showLineNumbers" checked>
+                                Show line numbers
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="showMinimap" checked>
+                                Show minimap
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="wordWrap" checked>
+                                Word wrap
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-pane" id="shortcuts">
+                        <h3>Keyboard Shortcuts</h3>
+                        <div class="shortcut-item">
+                            <span class="shortcut-label">Toggle Terminal</span>
+                            <span class="shortcut-keys">Ctrl+`</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-label">Save File</span>
+                            <span class="shortcut-keys">Ctrl+S</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-label">Run Code</span>
+                            <span class="shortcut-keys">F5</span>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-pane" id="extensions">
+                        <h3>Extensions</h3>
+                        <div class="search-box">
+                            <input type="text" placeholder="Search extensions..." class="form-control">
+                        </div>
+                        <div class="extensions-list">
+                            <div class="extension-item">
+                                <div class="extension-icon">
+                                    <i class="fab fa-python"></i>
+                                </div>
+                                <div class="extension-details">
+                                    <h4>Python</h4>
+                                    <p>IntelliSense, linting, debugging, code formatting, refactoring, and more.</p>
+                                </div>
+                                <button class="btn btn-sm">Install</button>
+                            </div>
+                            <div class="extension-item">
+                                <div class="extension-icon">
+                                    <i class="fab fa-js"></i>
+                                </div>
+                                <div class="extension-details">
+                                    <h4>JavaScript (ES6) code snippets</h4>
+                                    <p>Code snippets for JavaScript in ES6 syntax</p>
+                                </div>
+                                <button class="btn btn-sm">Install</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="saveBtn" class="save-btn">Zapisz Ustawienia</button>
-                <button id="resetBtn" class="reset-btn">Resetuj</button>
+                <button id="saveSettings" class="btn btn-primary">Save</button>
+                <button id="cancelSettings" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>
