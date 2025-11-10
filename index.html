@@ -8,51 +8,63 @@
 </head>
 <body>
     <div class="container">
-            <button id="settingsBtn" class="settings-btn" title="Ustawienia URL">⚙️</button>
+        <button id="settingsBtn" class="settings-btn" title="Ustawienia URL">⚙️</button>
 
-        <!-- Grid z 5 iframe-ami -->
-        <main class="iframe-grid">
-            <!-- Duży iframe na górze (zajmuje całą szerokość) -->
-            <div class="iframe-wrapper iframe-large">
-                <div class="iframe-header">
-                    <span class="iframe-title">Panel 1</span>
-                    <button class="refresh-btn" data-iframe="1" title="Odśwież">🔄</button>
+        <div class="main-container">
+            <!-- Left column - 25% width -->
+            <div class="left-column">
+                <!-- Panel 2 -->
+                <div class="iframe-wrapper">
+                    <div class="iframe-header">
+                        <span class="iframe-title">Panel 2</span>
+                        <button class="refresh-btn" data-iframe="2" title="Odśwież">🔄</button>
+                    </div>
+                    <iframe id="iframe2" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
                 </div>
-                <iframe id="iframe1" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
+
+                <!-- Panel 3 -->
+                <div class="iframe-wrapper">
+                    <div class="iframe-header">
+                        <span class="iframe-title">Panel 3</span>
+                        <button class="refresh-btn" data-iframe="3" title="Odśwież">🔄</button>
+                    </div>
+                    <iframe id="iframe3" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
+                </div>
             </div>
 
-            <!-- 4 mniejsze iframe-y w dolnej części -->
-            <div class="iframe-wrapper iframe-small">
-                <div class="iframe-header">
-                    <span class="iframe-title">Panel 2</span>
-                    <button class="refresh-btn" data-iframe="2" title="Odśwież">🔄</button>
+            <!-- Right column - 75% width -->
+            <div class="right-column">
+                <!-- Panel 1 - Full width at the top -->
+                <div class="iframe-wrapper" id="panel1">
+                    <div class="iframe-header">
+                        <span class="iframe-title">Panel 1</span>
+                        <button class="refresh-btn" data-iframe="1" title="Odśwież">🔄</button>
+                    </div>
+                    <iframe id="iframe1" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
                 </div>
-                <iframe id="iframe2" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
-            </div>
 
-            <div class="iframe-wrapper iframe-small">
-                <div class="iframe-header">
-                    <span class="iframe-title">Panel 3</span>
-                    <button class="refresh-btn" data-iframe="3" title="Odśwież">🔄</button>
-                </div>
-                <iframe id="iframe3" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
-            </div>
+                <!-- Panels 4 & 5 - Side by side at the bottom -->
+                <div class="panels-row">
+                    <!-- Panel 4 -->
+                    <div class="iframe-wrapper">
+                        <div class="iframe-header">
+                            <span class="iframe-title">Panel 4</span>
+                            <button class="refresh-btn" data-iframe="4" title="Odśwież">🔄</button>
+                        </div>
+                        <iframe id="iframe4" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
+                    </div>
 
-            <div class="iframe-wrapper iframe-small">
-                <div class="iframe-header">
-                    <span class="iframe-title">Panel 4</span>
-                    <button class="refresh-btn" data-iframe="4" title="Odśwież">🔄</button>
+                    <!-- Panel 5 -->
+                    <div class="iframe-wrapper">
+                        <div class="iframe-header">
+                            <span class="iframe-title">Panel 5</span>
+                            <button class="refresh-btn" data-iframe="5" title="Odśwież">🔄</button>
+                        </div>
+                        <iframe id="iframe5" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
+                    </div>
                 </div>
-                <iframe id="iframe4" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
             </div>
-
-            <div class="iframe-wrapper iframe-small">
-                <div class="iframe-header">
-                    <span class="iframe-title">Panel 5</span>
-                    <button class="refresh-btn" data-iframe="5" title="Odśwież">🔄</button>
-                </div>
-                <iframe id="iframe5" src="https://www.example.com" frameborder="0" allowfullscreen></iframe>
-            </div>
+        </div>
         </main>
     </div>
 
