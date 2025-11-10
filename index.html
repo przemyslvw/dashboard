@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arch Dashboard</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,7 +46,7 @@
                             <i class="fas fa-sync-alt"></i>
                         </button>
                     </div>
-                    <img src="https://192.168.0.237:8080/video" alt="Video stream" class="camera-feed">
+
                 </div>
 
                 <!-- Terminal -->
@@ -134,15 +134,13 @@
                         <div class="iframe-header">
                             <span class="iframe-title">Output</span>
                             <div class="output-tabs">
-                                <button class="tab active">Terminal</button>
-                                <button class="tab">Problems</button>
-                                <button class="tab">Debug Console</button>
+                                <button class="tab active"></button>
+                                <button class="tab"></button>
+                                <button class="tab"></button>
                             </div>
                         </div>
-                        <div class="output-panel">
-                            <div class="terminal-line">$ python main.py</div>
-                            <div class="terminal-line">Hello, Arch Linux!</div>
-                            <div class="terminal-line">$ <span class="cursor">_</span></div>
+                        <div class="camera-container">
+                            <img src="https://192.168.0.237:8080/video" alt="Video stream" class="camera-feed">
                         </div>
                     </div>
                 </div>
