@@ -5,9 +5,7 @@
         { code: 'GBP', name: 'Funt brytyjski', flag: '🇬🇧' },
         { code: 'CHF', name: 'Frank szwajcarski', flag: '🇨🇭' },
         { code: 'BTC', name: 'Bitcoin', flag: '₿', isCrypto: true },
-        { code: 'JPY', name: 'Jen japoński', flag: '🇯🇵', amount: 100 },
-        { code: 'CZK', name: 'Korona czeska', flag: '🇨🇿', amount: 100 },
-        { code: 'SEK', name: 'Korona szwedzka', flag: '🇸🇪', amount: 100 },
+
     ];
 
     // Chart instance
@@ -371,45 +369,41 @@
     document.addEventListener('DOMContentLoaded', () => {
         console.log('DOMContentLoaded: Initializing...');
         
-        // Initialize chart view elements first
+        // Initialize elements
         const chartView = document.getElementById('chart-view');
         const currencyGrid = document.getElementById('currency-grid');
-        const currencySelect = document.getElementById('currency-select');
         
-        if (!chartView) {
-            console.error('chart-view element not found!');
+        if (!chartView || !currencyGrid) {
+            console.error('Required elements not found!', { chartView: !!chartView, currencyGrid: !!currencyGrid });
             return;
         }
         
-        // Make sure chart container is properly set up
-        if (!chartView.querySelector('canvas')) {
-            console.log('Initializing chart container...');
-            chartView.innerHTML = `
-                <div class="chart-container" style="position: relative; height: 100%; width: 100%;">
-                    <canvas id="currency-chart"></canvas>
-                </div>
-                <div class="chart-controls">
-                    <select id="currency-select" class="currency-select">
-                        <option value="">Wybierz walutę</option>
-                    </select>
-                    <div class="chart-period">
-                        <button class="period-btn active" data-days="7">7 dni</button>
-                        <button class="period-btn" data-days="14">14 dni</button>
-                        <button class="period-btn" data-days="30">30 dni</button>
-                    </div>
-                </div>
-            `;
+        // Initially hide the chart view
+        chartView.style.display = 'none';
+        
+        // Initial data load with retry logic
+        function initializeData(retryCount = 0) {
+            const maxRetries = 3;
+            
+            fetchExchangeRates()
+                .then(() => {
+                    console.log('Rates loaded, setting up chart view...');
+                    // Give the DOM a moment to update
+                    setTimeout(() => {
+                        setupChartView();
+                    }, 100);
+                })
+                .catch(error => {
+                    console.error('Error initializing currency data:', error);
+                    if (retryCount < maxRetries) {
+                        console.log(`Retrying... (${retryCount + 1}/${maxRetries})`);
+                        setTimeout(() => initializeData(retryCount + 1), 1000 * (retryCount + 1));
+                    }
+                });
         }
         
-        // Initial data load
-        fetchExchangeRates()
-            .then(() => {
-                // After rates are loaded, set up the view
-                setupChartView();
-            })
-            .catch(error => {
-                console.error('Error initializing currency data:', error);
-            });
+        // Start the initialization
+        initializeData();
         
         // Set up refresh button
         document.getElementById('refresh-rates').addEventListener('click', () => {
@@ -422,13 +416,18 @@
         }, 5 * 60 * 1000);
         
         function setupChartView() {
-            console.log('Setting up chart view...');
+            console.log('setupChartView called');
             const currencySelect = document.getElementById('currency-select');
+            const chartView = document.getElementById('chart-view');
             
             if (!currencySelect) {
-                console.error('Currency select element not found!');
+                console.error('Currency select element not found in setupChartView!');
+                console.log('Current chart-view content:', chartView?.innerHTML);
+                console.log('Document body:', document.body.innerHTML);
                 return;
             }
+            
+            console.log('Currency select found, proceeding with chart setup');
             
             console.log('Available currencies:', Array.from(currencySelect.options).map(o => o.value));
             
@@ -450,19 +449,20 @@
                     currencySelect._hasChangeListener = true;
                 }
                 
-                // Add event listeners for period buttons
-                document.querySelectorAll('.period-btn').forEach(btn => {
-                    if (!btn._hasClickListener) {
-                        btn.addEventListener('click', (e) => {
+                // Add event listeners for period buttons using event delegation
+                const chartView = document.getElementById('chart-view');
+                if (chartView) {
+                    chartView.addEventListener('click', (e) => {
+                        const periodBtn = e.target.closest('.period-btn');
+                        if (periodBtn) {
                             document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-                            e.target.classList.add('active');
-                            currentDays = parseInt(e.target.dataset.days);
+                            periodBtn.classList.add('active');
+                            currentDays = parseInt(periodBtn.dataset.days);
                             console.log('Period changed to:', currentDays, 'days');
                             updateChart(currentCurrency, currentDays).catch(console.error);
-                        });
-                        btn._hasClickListener = true;
-                    }
-                });
+                        }
+                    });
+                }
                 
                 // Initialize the chart
                 console.log('Calling updateChart with:', { currency: currentCurrency, days: currentDays });
@@ -471,18 +471,67 @@
                 });
             } else {
                 console.warn('No currency options available yet');
+                // Try again after a short delay if no options are available yet
+                setTimeout(() => {
+                    if (document.getElementById('currency-select')?.options.length > 1) {
+                        setupChartView();
+                    }
+                }, 500);
             }
         }
         
         function showChartView() {
+            console.log('showChartView called');
             const chartView = document.getElementById('chart-view');
             const currencyGrid = document.getElementById('currency-grid');
             
-            currencyGrid.classList.add('hidden');
-            chartView.classList.remove('hidden');
+            if (!chartView || !currencyGrid) {
+                console.error('Required elements not found in showChartView');
+                return;
+            }
             
-            // Initialize chart if not already done
-            setupChartView();
+            // First hide the grid and show the chart view
+            currencyGrid.classList.add('hidden');
+            chartView.style.display = 'block'; // Make sure it's visible
+            
+            // Create the chart HTML structure
+            const chartHTML = `
+                <div class="chart-container" style="position: relative; height: 100%; width: 100%;">
+                    <canvas id="currency-chart"></canvas>
+                </div>
+                <div class="chart-controls">
+                    <select id="currency-select" class="currency-select">
+                        <option value="">Wybierz walutę</option>
+                        ${currencies.map(c => `<option value="${c.code}">${c.flag} ${c.name} (${c.code})</option>`).join('')}
+                    </select>
+                    <div class="chart-period">
+                        <button class="period-btn active" data-days="7">7 dni</button>
+                        <button class="period-btn" data-days="14">14 dni</button>
+                        <button class="period-btn" data-days="30">30 dni</button>
+                    </div>
+                </div>
+            `;
+            
+            console.log('Setting chart view HTML...');
+            chartView.innerHTML = chartHTML;
+            
+            // Verify the select element was created
+            const checkSelect = () => {
+                const select = document.getElementById('currency-select');
+                if (select) {
+                    console.log('Currency select found, proceeding with setupChartView');
+                    console.log('Select element:', select);
+                    console.log('Options:', Array.from(select.options).map(o => o.value));
+                    setupChartView();
+                } else {
+                    console.error('Currency select still not found, retrying...');
+                    console.log('Current chart view content:', chartView.innerHTML);
+                    setTimeout(checkSelect, 100);
+                }
+            };
+            
+            // Start checking for the select element
+            checkSelect();
         }
         
         function showGridView() {
@@ -490,18 +539,31 @@
             document.getElementById('chart-view').classList.add('hidden');
         }
 
-        // View toggle
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        // View toggle with event delegation and better error handling
+        document.addEventListener('click', (e) => {
+            console.log('Click event:', e.target);
+            const viewBtn = e.target.closest('.view-btn');
+            if (!viewBtn) {
+                console.log('Not a view button click');
+                return;
+            }
+            
+            console.log('View button clicked:', viewBtn.dataset.view);
+            
+            try {
                 document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                viewBtn.classList.add('active');
                 
-                if (btn.dataset.view === 'chart') {
+                if (viewBtn.dataset.view === 'chart') {
+                    console.log('Showing chart view');
                     showChartView();
                 } else {
+                    console.log('Showing grid view');
                     showGridView();
                 }
-            });
+            } catch (error) {
+                console.error('Error in view toggle:', error);
+            }
         });
         
         // Set up view toggle buttons
