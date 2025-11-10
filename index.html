@@ -59,19 +59,46 @@
                 </div>
 
                 <!-- Terminal -->
-                <div class="iframe-wrapper">
-                    <div class="iframe-header">
-                        <span class="iframe-title">Camera Feed</span>
-                        <div class="header-controls">
-                            <button class="fullscreen-btn" title="Toggle fullscreen">
-                                <i class="fas fa-expand"></i>
-                            </button>
+                    <div class="iframe-wrapper">
+                        <div class="iframe-header">
+                            <span class="iframe-title">File Explorer</span>
+                            <div class="header-controls">
+                                <div class="explorer-actions">
+                                    <button class="explorer-btn" title="New File"><i class="far fa-file"></i></button>
+                                    <button class="explorer-btn" title="New Folder"><i class="far fa-folder"></i></button>
+                                    <button class="explorer-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+                                </div>
+                                <button class="fullscreen-btn" title="Toggle fullscreen">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="file-explorer">
+                            <div class="file-item selected">
+                                <i class="fab fa-python"></i> main.py
+                            </div>
+                            <div class="file-item">
+                                <i class="fab fa-js"></i> script.js
+                            </div>
+                            <div class="file-item">
+                                <i class="fab fa-html5"></i> index.html
+                            </div>
+                            <div class="file-item">
+                                <i class="fab fa-css3-alt"></i> style.css
+                            </div>
+                            <div class="folder">
+                                <div class="folder-header">
+                                    <i class="fas fa-chevron-right"></i>
+                                    <i class="far fa-folder"></i> assets
+                                </div>
+                                <div class="folder-contents">
+                                    <div class="file-item">
+                                        <i class="fas fa-image"></i> logo.png
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="terminal" id="terminal">
-                        <img src="https://www.slupsk.pl/kamera2" alt="Video stream" class="camera-feed">
-                    </div>
-                </div>
 
                 <!-- Docker Containers -->
                 <div class="iframe-wrapper">
@@ -131,42 +158,15 @@
                     <!-- File Explorer -->
                     <div class="iframe-wrapper">
                         <div class="iframe-header">
-                            <span class="iframe-title">File Explorer</span>
+                            <span class="iframe-title">Camera Feed</span>
                             <div class="header-controls">
-                                <div class="explorer-actions">
-                                    <button class="explorer-btn" title="New File"><i class="far fa-file"></i></button>
-                                    <button class="explorer-btn" title="New Folder"><i class="far fa-folder"></i></button>
-                                    <button class="explorer-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
-                                </div>
                                 <button class="fullscreen-btn" title="Toggle fullscreen">
                                     <i class="fas fa-expand"></i>
                                 </button>
                             </div>
                         </div>
-                        <div class="file-explorer">
-                            <div class="file-item selected">
-                                <i class="fab fa-python"></i> main.py
-                            </div>
-                            <div class="file-item">
-                                <i class="fab fa-js"></i> script.js
-                            </div>
-                            <div class="file-item">
-                                <i class="fab fa-html5"></i> index.html
-                            </div>
-                            <div class="file-item">
-                                <i class="fab fa-css3-alt"></i> style.css
-                            </div>
-                            <div class="folder">
-                                <div class="folder-header">
-                                    <i class="fas fa-chevron-right"></i>
-                                    <i class="far fa-folder"></i> assets
-                                </div>
-                                <div class="folder-contents">
-                                    <div class="file-item">
-                                        <i class="fas fa-image"></i> logo.png
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="terminal" id="terminal">
+                            <img src="https://www.slupsk.pl/kamera2" alt="Video stream" class="camera-feed">
                         </div>
                     </div>
 
