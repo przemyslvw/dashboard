@@ -22,9 +22,14 @@
                 <div class="iframe-wrapper">
                     <div class="iframe-header">
                         <span class="iframe-title">System Status</span>
-                        <button class="refresh-btn" data-iframe="stats" title="Refresh">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                        <div class="header-controls">
+                            <button class="refresh-btn" data-iframe="stats" title="Refresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="fullscreen-btn" title="Toggle fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
                     </div>
                     <div id="system-stats" class="terminal">
                         <div class="terminal-line">$ <span class="command">neofetch --stdout</span></div>
@@ -37,22 +42,55 @@
                         <div class="terminal-line">Disk: 1.2TB / 2.0TB</div>
                     </div>
                 </div>
-
                 <!-- Camera Feed -->
                 <div class="iframe-wrapper">
                     <div class="iframe-header">
-                        <span class="iframe-title">Camera Feed</span>
-                        <button class="refresh-btn" data-iframe="camera" title="Refresh">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                        <span class="iframe-title">Waluty</span>
+                        <div class="header-controls">
+                            <button class="refresh-btn" data-iframe="camera" title="Refresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="fullscreen-btn" title="Toggle fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
                     </div>
 
                 </div>
 
                 <!-- Terminal -->
                 <div class="iframe-wrapper">
+                    <div class="iframe-header">
+                        <span class="iframe-title">Camera Feed</span>
+                        <div class="header-controls">
+                            <button class="fullscreen-btn" title="Toggle fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="terminal" id="terminal">
                         <img src="https://www.slupsk.pl/kamera2" alt="Video stream" class="camera-feed">
+                    </div>
+                </div>
+
+                <!-- Docker Containers -->
+                <div class="iframe-wrapper">
+                    <div class="iframe-header">
+                        <span class="iframe-title">Docker Containers</span>
+                        <div class="header-controls">
+                            <button class="refresh-btn" title="Refresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="fullscreen-btn" title="Toggle fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="terminal">
+                        <div class="terminal-line"><span class="user">user@archlinux</span>:<span class="path">~</span>$ <span class="command">docker ps</span></div>
+                        <div class="terminal-line">CONTAINER ID   IMAGE     COMMAND                  CREATED      STATUS      PORTS     NAMES</div>
+                        <div class="terminal-line">a1b2c3d4e5f6   nginx     "/docker-entrypoint.…"   2 days ago   Up 2 days   80/tcp    webserver</div>
+                        <div class="terminal-line">b2c3d4e5f6a7   mysql     "docker-entrypoint.s…"   1 week ago   Up 1 day    3306/tcp  db</div>
                     </div>
                 </div>
             </div>
@@ -69,10 +107,15 @@
                             <button class="tab">utils.py</button>
                             <button class="tab-add">+</button>
                         </div>
-                        <div class="panel-actions">
-                            <button class="action-btn" title="Run"><i class="fas fa-play"></i></button>
-                            <button class="action-btn" title="Debug"><i class="fas fa-bug"></i></button>
-                            <button class="action-btn" title="Settings"><i class="fas fa-cog"></i></button>
+                        <div class="header-controls">
+                            <div class="panel-actions">
+                                <button class="action-btn" title="Run"><i class="fas fa-play"></i></button>
+                                <button class="action-btn" title="Debug"><i class="fas fa-bug"></i></button>
+                                <button class="action-btn" title="Settings"><i class="fas fa-cog"></i></button>
+                            </div>
+                            <button class="fullscreen-btn" title="Toggle fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="code-editor">
@@ -89,10 +132,15 @@
                     <div class="iframe-wrapper">
                         <div class="iframe-header">
                             <span class="iframe-title">File Explorer</span>
-                            <div class="explorer-actions">
-                                <button class="explorer-btn" title="New File"><i class="far fa-file"></i></button>
-                                <button class="explorer-btn" title="New Folder"><i class="far fa-folder"></i></button>
-                                <button class="explorer-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+                            <div class="header-controls">
+                                <div class="explorer-actions">
+                                    <button class="explorer-btn" title="New File"><i class="far fa-file"></i></button>
+                                    <button class="explorer-btn" title="New Folder"><i class="far fa-folder"></i></button>
+                                    <button class="explorer-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+                                </div>
+                                <button class="fullscreen-btn" title="Toggle fullscreen">
+                                    <i class="fas fa-expand"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="file-explorer">
@@ -124,6 +172,14 @@
 
                     <!-- Output / Terminal -->
                     <div class="iframe-wrapper">
+                        <div class="iframe-header">
+                            <span class="iframe-title">Output / Terminal</span>
+                            <div class="header-controls">
+                                <button class="fullscreen-btn" title="Toggle fullscreen">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
                         <div class="camera-container">
                             <img src="https://192.168.0.237:8080/video" alt="Video stream" class="camera-feed">
                         </div>
