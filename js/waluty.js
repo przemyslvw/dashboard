@@ -22,6 +22,39 @@ let currentDays = 30;
 
 // Cache for rates to calculate changes
 let previousRates = {};
+let currentRates = {};
+
+// Initialize rates from localStorage if available
+function initializeRates() {
+    const savedRates = localStorage.getItem('previousRates');
+    if (savedRates) {
+        try {
+            previousRates = JSON.parse(savedRates);
+            // Check if rates are older than 1 hour
+            const rateTimestamp = localStorage.getItem('ratesTimestamp');
+            const oneHourAgo = Date.now() - (60 * 60 * 1000);
+            
+            if (rateTimestamp && rateTimestamp < oneHourAgo) {
+                // Keep the rates but clear the changes
+                previousRates = Object.fromEntries(
+                    Object.entries(previousRates).map(([key, value]) => [key, value.rate])
+                );
+            }
+        } catch (e) {
+            console.error('Error parsing saved rates:', e);
+            previousRates = {};
+        }
+    }
+}
+
+// Save current rates for next time
+function saveCurrentRates() {
+    localStorage.setItem('previousRates', JSON.stringify(currentRates));
+    localStorage.setItem('ratesTimestamp', Date.now());
+}
+
+// Initial rates initialization
+initializeRates();
 
 // Fetch exchange rates from NBP API
 async function fetchExchangeRates() {
@@ -74,28 +107,51 @@ async function fetchExchangeRates() {
             });
         }
 
+        // Reset current rates
+        currentRates = {};
+        
         // Process each currency for the grid
         currencies.forEach(currency => {
             if (currency.isCrypto) {
                 // Handle crypto currencies
                 const rate = currency.code === 'BTC' ? btcRate : 
                             currency.code === 'ETH' ? btcRate * 0.06 : 0; // Przykładowy kurs ETH
-                const change = previousRates[currency.code] ? 
-                    calculateChange(rate, previousRates[currency.code]) : 0;
+                
+                // Calculate change based on previous rate
+                let change = 0;
+                if (previousRates[currency.code]) {
+                    // If we have a previous rate, calculate the change
+                    change = calculateChange(rate, previousRates[currency.code]);
+                } else if (previousRates[currency.code] === 0) {
+                    // If previous rate was 0, set change to 0
+                    change = 0;
+                } else {
+                    // No previous rate, set to 0% change
+                    change = 0;
+                }
+                
+                // Store current rate for next time
+                currentRates[currency.code] = rate;
                 
                 html += createCurrencyItem({
                     ...currency,
                     rate: rate,
                     change: change
                 });
-                
-                // Update previous rate for next time
-                previousRates[currency.code] = rate;
             } else if (currency.isStock) {
                 // Handle stocks
                 if (currency.code === 'NVDA' && nvdaPrice) {
-                    const change = previousRates['NVDA'] ? 
-                        calculateChange(nvdaPrice, previousRates['NVDA']) : 0;
+                    let change = 0;
+                    if (previousRates['NVDA']) {
+                        change = calculateChange(nvdaPrice, previousRates['NVDA']);
+                    } else if (previousRates['NVDA'] === 0) {
+                        change = 0;
+                    } else {
+                        change = 0;
+                    }
+                    
+                    // Store current rate for next time
+                    currentRates['NVDA'] = nvdaPrice;
                     
                     html += createCurrencyItem({
                         ...currency,
@@ -104,8 +160,6 @@ async function fetchExchangeRates() {
                         symbol: '$', // Dodajemy symbol waluty dla akcji
                         isStock: true
                     });
-                    
-                    previousRates['NVDA'] = nvdaPrice;
                 }
             } else {
                 // Handle fiat currencies
@@ -113,24 +167,34 @@ async function fetchExchangeRates() {
                 if (rateData) {
                     const amount = currency.amount || 1;
                     const rate = rateData.mid / (currency.amount ? rateData.amount : 1);
-                    const change = previousRates[currency.code] ? 
-                        calculateChange(rate, previousRates[currency.code]) : 0;
-                        
+                    
+                    // Calculate change based on previous rate
+                    let change = 0;
+                    if (previousRates[currency.code]) {
+                        change = calculateChange(rate, previousRates[currency.code]);
+                    } else if (previousRates[currency.code] === 0) {
+                        change = 0;
+                    } else {
+                        change = 0;
+                    }
+                    
+                    // Store current rate for next time
+                    currentRates[currency.code] = rate;
+                    
                     html += createCurrencyItem({
                         ...currency,
                         rate: rate,
                         change: change,
-                                amount: amount
-                            });
-                            
-                    // Update previous rate for next time
-                    previousRates[currency.code] = rate;
+                        amount: amount
+                    });
                 }
             }
         });
         
         if (currencyGrid) {
             currencyGrid.innerHTML = html;
+            // Save the current rates for next time
+            saveCurrentRates();
         }
     } catch (error) {
         console.error('Error fetching exchange rates:', error);
@@ -140,13 +204,14 @@ async function fetchExchangeRates() {
     }
 }
         
-function createCurrencyItem({ code, name, flag, rate, change, amount = 1, symbol = '', isStock = false }) {
+function createCurrencyItem({ code, name, flag, rate, change = 0, amount = 1, symbol = '', isStock = false }) {
     const displayRate = rate ? rate.toFixed(2) : '0.00';
     const displayAmount = amount > 1 ? amount + ' ' : '';
     const changeClass = change > 0 ? 'positive' : change < 0 ? 'negative' : '';
     const changeSymbol = change > 0 ? '↑' : change < 0 ? '↓' : '';
     const changeText = change !== 0 ? 
-        `${changeSymbol} ${Math.abs(change).toFixed(2)}%` : '-';
+        `${changeSymbol} ${Math.abs(change).toFixed(2)}%` : 
+        `${changeSymbol} 0.00%`; // Show 0.00% instead of just a dash
     
     // Domyślna waluta to PLN, chyba że to akcja (wtedy $) lub inna waluta
     const currencySymbol = isStock ? '$' : (symbol || 'PLN');
