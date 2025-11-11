@@ -1,5 +1,7 @@
     // Currency data with flags and NBP API codes
 const currencies = [
+    { code: 'XAU', name: 'Złoto (1g)', flag: '🥇', isMetal: true },
+    { code: 'XAG', name: 'Srebro (1g)', flag: '🥈', isMetal: true },
     { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
     { code: 'USD', name: 'Dolar amerykański', flag: '🇺🇸' },
     { code: 'COP', name: 'Peso kolumbijskie', flag: '🇨🇴' },
@@ -67,19 +69,28 @@ async function fetchExchangeRates() {
     currencyGrid.innerHTML = '<div class="currency-loading"><i class="fas fa-spinner fa-spin"></i> Ładowanie kursów...</div>';
     
     try {
-        // Get crypto and stock rates from CoinGecko
-        const [btcResponse, nvdaResponse] = await Promise.all([
+        // Get crypto, stock, and metal rates
+        const [btcResponse, nvdaResponse, goldResponse, silverResponse] = await Promise.all([
             fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=pln'),
-            fetch('https://api.coingecko.com/api/v3/simple/price?ids=nvidia&vs_currencies=usd')
+            fetch('https://api.coingecko.com/api/v3/simple/price?ids=nvidia&vs_currencies=usd'),
+            fetch('https://api.nbp.pl/api/cenyzlota'),
+            fetch('https://api.metals.live/v1/spot/silver')
         ]);
         
-        const [btcData, nvdaData] = await Promise.all([
+        const [btcData, nvdaData, goldData, silverData] = await Promise.all([
             btcResponse.json(),
-            nvdaResponse.json()
+            nvdaResponse.json(),
+            goldResponse.json(),
+            silverData.ok ? silverResponse.json() : Promise.resolve({ price: 0 })
         ]);
         
         const btcRate = btcData.bitcoin?.pln;
         const nvdaPrice = nvdaData.nvidia?.usd;
+        // Gold price from NBP is for 1g in PLN
+        const goldPricePerGram = goldData[0]?.cena || 0;
+        // Silver price from API is in USD per troy ounce, convert to PLN per gram (1 troy oz = 31.1035g, 1 USD = current USD/PLN rate)
+        const usdToPln = await getUsdToPlnRate();
+        const silverPricePerGram = silverData?.price ? (silverData.price * usdToPln / 31.1035) : 0;
         
         // Get other currencies from NBP
         const response = await fetch('https://api.nbp.pl/api/exchangerates/tables/A/');
@@ -137,6 +148,34 @@ async function fetchExchangeRates() {
                     ...currency,
                     rate: rate,
                     change: change
+                });
+            } else if (currency.isMetal) {
+                // Handle precious metals
+                let rate = 0;
+                if (currency.code === 'XAU') {
+                    rate = goldPricePerGram;
+                } else if (currency.code === 'XAG') {
+                    rate = silverPricePerGram;
+                }
+                
+                // Calculate change based on previous rate
+                let change = 0;
+                if (previousRates[currency.code]) {
+                    change = calculateChange(rate, previousRates[currency.code]);
+                } else if (previousRates[currency.code] === 0) {
+                    change = 0;
+                } else {
+                    change = 0;
+                }
+                
+                // Store current rate for next time
+                currentRates[currency.code] = rate;
+                
+                html += createCurrencyItem({
+                    ...currency,
+                    rate: rate,
+                    change: change,
+                    symbol: 'zł' // Złoty symbol for metals
                 });
             } else if (currency.isStock) {
                 // Handle stocks
@@ -232,6 +271,18 @@ function createCurrencyItem({ code, name, flag, rate, change = 0, amount = 1, sy
 
 function calculateChange(currentRate, previousRate) {
     return ((currentRate - previousRate) / previousRate) * 100;
+}
+
+// Helper function to get USD to PLN rate
+async function getUsdToPlnRate() {
+    try {
+        const response = await fetch('https://api.nbp.pl/api/exchangerates/rates/a/usd/');
+        const data = await response.json();
+        return data.rates?.[0]?.mid || 4.0; // Default to 4.0 if API call fails
+    } catch (error) {
+        console.error('Error fetching USD/PLN rate:', error);
+        return 4.0; // Fallback rate
+    }
 }
 
 // Format date for display
