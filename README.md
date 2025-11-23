@@ -1,169 +1,72 @@
-# Monitor Danych w Czasie Rzeczywistym
+# Dashboard Systemu i Walut
 
 ## 📋 Opis Projektu
 
-Profesjonalna strona internetowa typu "one page" z layoutem fullscreen, zaprojektowana do monitorowania danych w czasie rzeczywistym z 5 różnych źródeł poprzez iframe-y.
+Nowoczesny dashboard typu "single page" wyświetlający informacje systemowe oraz kursy walut w czasie rzeczywistym. Zaprojektowany w stylu ciemnym (dark mode) z dbałością o estetykę i użyteczność.
 
-## ✨ Zaimplementowane Funkcjonalności
+## ✨ Funkcjonalności
 
-### Obecne Możliwości:
-- ✅ **Layout Fullscreen** - Strona wykorzystuje 100% dostępnej przestrzeni ekranu
-- ✅ **5 Iframe-ów** - Układ z 1 dużym iframe-em na górze i 4 mniejszymi na dole
-- ✅ **Konfiguracja URL** - Modal do edycji URL-i wszystkich iframe-ów
-- ✅ **LocalStorage** - Automatyczne zapisywanie ustawień URL-i
-- ✅ **Odświeżanie** - Przycisk do odświeżania każdego iframe osobno
-- ✅ **Responsywny Design** - Dostosowuje się do różnych rozmiarów ekranu
-- ✅ **Powiadomienia** - Wizualne powiadomienia o akcjach użytkownika
-- ✅ **Animacje** - Płynne przejścia i efekty hover
-- ✅ **Nowoczesny UI** - Gradient w fioletowych odcieniach, zaokrąglone rogi
+### 🖥️ Panele Systemowe (Symulacja)
+- **System Status**: Wyświetla informacje o systemie w stylu `neofetch` (OS, Kernel, Uptime, CPU, RAM, Disk).
+- **Code Editor**: Podgląd edytora kodu z kolorowaniem składni dla Pythona.
+- **File Explorer**: Drzewo plików projektu.
+- **Docker Containers**: Lista kontenerów Docker w stylu terminala.
+- **Output / Terminal**: Dodatkowy panel wyjściowy (np. logi lub podgląd kamery).
 
-## 🎯 Funkcjonalności UI
+### 💰 Monitor Walut (Real-time)
+- **Dane na żywo**: Pobieranie kursów walut (NBP), kryptowalut (CoinGecko) i surowców (Metals.live).
+- **Wsparcie dla wielu aktywów**:
+  - Waluty fiat (EUR, USD, GBP, CHF, etc.)
+  - Kryptowaluty (BTC, ETH)
+  - Metale szlachetne (Złoto, Srebro)
+  - Akcje (NVDA)
+- **Interaktywne Wykresy**: Wyświetlanie historii kursów dla wybranych aktywów (7, 14, 30 dni).
+- **Automatyczne Odświeżanie**: Dane są aktualizowane co 5 minut.
+- **Wskaźniki Zmian**: Wizualna informacja o wzroście/spadku kursu względem poprzedniego odczytu.
 
-### Layout Iframe-ów:
-```
-┌─────────────────────────────────┐
-│         Panel 1 (Duży)          │
-│                                 │
-├────────────┬────────────────────┤
-│  Panel 2   │     Panel 3        │
-├────────────┼────────────────────┤
-│  Panel 4   │     Panel 5        │
-└────────────┴────────────────────┘
-```
+### 📷 Podgląd Kamer
+- Integracja ze strumieniami wideo z kamer przemysłowych lub internetowych.
 
-### Dostępne Akcje:
-1. **⚙️ Konfiguracja** - Kliknij ikonę koła zębatego w prawym górnym rogu
-2. **🔄 Odświeżanie** - Każdy panel ma przycisk do odświeżenia zawartości
-3. **💾 Zapisywanie** - URL-e są automatycznie zapisywane w przeglądarce
-4. **🔄 Reset** - Przywrócenie domyślnych URL-i
+## 🛠️ Technologie
+
+- **HTML5 & CSS3**: Flexbox, Grid Layout, Zmienne CSS.
+- **JavaScript (Vanilla)**: Brak ciężkich frameworków.
+- **Chart.js**: Renderowanie wykresów walut.
+- **Font Awesome**: Ikony.
+- **API Zewnętrzne**:
+  - NBP API (Waluty i Złoto)
+  - CoinGecko API (Kryptowaluty)
+  - Metals.live API (Srebro)
 
 ## 📁 Struktura Projektu
 
 ```
 /
-├── index.html          # Główna strona HTML
+├── index.html            # Główny plik aplikacji
 ├── css/
-│   └── style.css      # Style CSS
+│   ├── style.css         # Style ogólne i układ dashboardu
+│   └── waluty.css        # Style specyficzne dla modułu walut
 ├── js/
-│   └── script.js      # Logika JavaScript
-└── README.md          # Dokumentacja
+│   ├── script.js         # Logika ogólna (fullscreen)
+│   ├── currency-service.js # Logika pobierania danych (API)
+│   └── waluty.js         # Logika UI modułu walut
+└── README.md             # Dokumentacja
 ```
 
-## 🚀 Jak Używać
+## 🚀 Uruchomienie
 
-### Pierwszy Start:
-1. Otwórz `index.html` w przeglądarce
-2. Kliknij przycisk ⚙️ w prawym górnym rogu
-3. Wpisz URL-e stron, które chcesz monitorować
-4. Kliknij "Zapisz Ustawienia"
+1. Sklonuj repozytorium lub pobierz pliki.
+2. Otwórz `index.html` w dowolnej nowoczesnej przeglądarce.
+   - **Uwaga**: Ze względu na politykę CORS niektórych API, zaleca się uruchomienie projektu na lokalnym serwerze (np. Live Server w VS Code, `python -m http.server`, `php -S localhost:8000`).
 
-### Zmiana URL-i:
-1. Kliknij przycisk ⚙️
-2. Edytuj URL-e w formularzu
-3. Zatwierdź przyciskiem "Zapisz Ustawienia"
+## 🎨 Dostosowanie
 
-### Odświeżanie Panelu:
-- Kliknij przycisk 🔄 na wybranym panelu
+### Zmiana URL Kamer:
+W pliku `index.html` znajdź tagi `img` w sekcjach `Camera Feed` i podmień atrybut `src` na własny strumień MJPEG lub obraz statyczny.
 
-### Reset Ustawień:
-- W modalu konfiguracji kliknij "Resetuj"
-
-## 🎨 Personalizacja
-
-### Zmiana Kolorów:
-Edytuj gradient w pliku `css/style.css`:
-```css
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-```
-
-### Zmiana Domyślnych URL-i:
-Edytuj obiekt `defaultUrls` w pliku `js/script.js`:
-```javascript
-const defaultUrls = {
-    iframe1: 'https://twoj-url-1.com',
-    iframe2: 'https://twoj-url-2.com',
-    // ...
-};
-```
-
-### Zmiana Układu:
-Edytuj grid w `css/style.css`:
-```css
-.iframe-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 2fr 1fr 1fr;
-}
-```
-
-## 📱 Responsywność
-
-- **Desktop**: Układ 1 duży + 4 małe (2x2)
-- **Mobile**: Układ pionowy 5 iframe-ów jeden pod drugim
-- **Tablet**: Automatyczne dostosowanie
-
-## 💾 Przechowywanie Danych
-
-- **LocalStorage**: URL-e iframe-ów są zapisywane lokalnie w przeglądarce
-- **Klucze**: `iframe1Url`, `iframe2Url`, `iframe3Url`, `iframe4Url`, `iframe5Url`
-- **Automatyczny zapis**: Ustawienia są przywracane przy każdym otwarciu strony
-
-## ⚠️ Ważne Uwagi
-
-### CORS (Cross-Origin Resource Sharing):
-- Niektóre strony mogą blokować wyświetlanie w iframe-ach
-- Jeśli strona nie ładuje się, sprawdź czy nie ma błędów CORS w konsoli przeglądarki
-- Problemy z CORS są zależne od konfiguracji serwera źródłowego
-
-### X-Frame-Options:
-- Niektóre strony używają nagłówka X-Frame-Options aby zablokować iframe-y
-- W takim przypadku trzeba znaleźć alternatywne źródło danych
-
-## 🔧 Technologie
-
-- **HTML5** - Struktura semantyczna
-- **CSS3** - Nowoczesne style, Grid Layout, Flexbox
-- **Vanilla JavaScript** - Bez dodatkowych bibliotek
-- **LocalStorage API** - Przechowywanie ustawień
-- **Iframe API** - Osadzanie zewnętrznych stron
-
-## 📊 Przykładowe Zastosowania
-
-- 📈 Dashboard analityczny z wykresami
-- 📺 Monitorowanie wielu kamer/streamów
-- 💹 Śledzenie rynków finansowych
-- 📊 Wizualizacja danych IoT
-- 🗺️ Mapa + panele informacyjne
-
-## 🆘 Rozwiązywanie Problemów
-
-### Iframe nie ładuje się:
-1. Sprawdź URL w konsoli deweloperskiej (F12)
-2. Sprawdź błędy CORS lub X-Frame-Options
-3. Spróbuj użyć alternatywnego URL
-
-### Ustawienia nie zapisują się:
-1. Sprawdź czy localStorage jest włączone w przeglądarce
-2. Sprawdź czy nie używasz trybu prywatnego/incognito
-
-### Strona nie wyświetla się poprawnie:
-1. Wyczyść cache przeglądarki
-2. Sprawdź czy wszystkie pliki są załadowane (DevTools → Network)
-
-## 🎯 Następne Kroki (Możliwe Rozszerzenia)
-
-- [ ] Dodanie możliwości zmiany układu iframe-ów (drag & drop)
-- [ ] Eksport/import konfiguracji
-- [ ] Tryb pełnoekranowy dla pojedynczych paneli
-- [ ] Automatyczne odświeżanie w określonych interwałach
-- [ ] Obsługa wielu profili z różnymi zestawami URL-i
-- [ ] Ciemny motyw (dark mode)
-- [ ] Wskaźniki ładowania dla iframe-ów
+### Dodawanie Walut:
+W pliku `js/currency-service.js` (lub `waluty.js` przed refaktoryzacją) znajduje się tablica `currencies`, którą można edytować.
 
 ## 📝 Licencja
 
-Projekt jest dostępny do swobodnego użytku i modyfikacji.
-
----
-
-**Utworzono**: 2025-11-09
-**Wersja**: 1.0.0
+Projekt dostępny na licencji MIT.
