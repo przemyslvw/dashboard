@@ -1,22 +1,3 @@
-    // Currency data with flags and NBP API codes
-const currencies = [
-    { code: 'XAU', name: 'Złoto (1g)', flag: '🥇', isMetal: true },
-    { code: 'XAG', name: 'Srebro (1g)', flag: '🥈', isMetal: true },
-    { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-    { code: 'USD', name: 'Dolar amerykański', flag: '🇺🇸' },
-    { code: 'COP', name: 'Peso kolumbijskie', flag: '🇨🇴' },
-    { code: 'GBP', name: 'Funt brytyjski', flag: '🇬🇧' },
-    { code: 'CHF', name: 'Frank szwajcarski', flag: '🇨🇭' },
-    { code: 'JPY', name: 'Jen japoński', flag: '🇯🇵'},
-    { code: 'AUD', name: 'Dolar australijski', flag: '🇦🇺' },
-    { code: 'CNY', name: 'Juan chiński', flag: '🇨🇳' },
-    { code: 'NOK', name: 'Korona norweska', flag: '🇳🇴' },
-    { code: 'SEK', name: 'Korona szwedzka', flag: '🇸🇪' },
-    { code: 'BTC', name: 'Bitcoin', flag: '₿', isCrypto: true },
-    { code: 'ETH', name: 'Ethereum', flag: '⟠', isCrypto: true },
-    { code: 'NVDA', name: 'Nvidia Corp', flag: '🎮', isStock: true }
-];
-
 // Chart instance
 let currencyChart = null;
 let currentCurrency = '';
@@ -58,7 +39,7 @@ function saveCurrentRates() {
 // Initial rates initialization
 initializeRates();
 
-// Fetch exchange rates from NBP API
+// Fetch exchange rates using CurrencyService
 async function fetchExchangeRates() {
     const currencyGrid = document.getElementById('currency-rates');
     if (!currencyGrid) {
@@ -69,33 +50,7 @@ async function fetchExchangeRates() {
     currencyGrid.innerHTML = '<div class="currency-loading"><i class="fas fa-spinner fa-spin"></i> Ładowanie kursów...</div>';
     
     try {
-        // Get crypto, stock, and metal rates
-        const [btcResponse, nvdaResponse, goldResponse, silverResponse] = await Promise.all([
-            fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=pln'),
-            fetch('https://api.coingecko.com/api/v3/simple/price?ids=nvidia&vs_currencies=usd'),
-            fetch('https://api.nbp.pl/api/cenyzlota'),
-            fetch('https://api.metals.live/v1/spot/silver')
-        ]);
-        
-        const [btcData, nvdaData, goldData, silverData] = await Promise.all([
-            btcResponse.json(),
-            nvdaResponse.json(),
-            goldResponse.json(),
-            silverData.ok ? silverResponse.json() : Promise.resolve({ price: 0 })
-        ]);
-        
-        const btcRate = btcData.bitcoin?.pln;
-        const nvdaPrice = nvdaData.nvidia?.usd;
-        // Gold price from NBP is for 1g in PLN
-        const goldPricePerGram = goldData[0]?.cena || 0;
-        // Silver price from API is in USD per troy ounce, convert to PLN per gram (1 troy oz = 31.1035g, 1 USD = current USD/PLN rate)
-        const usdToPln = await getUsdToPlnRate();
-        const silverPricePerGram = silverData?.price ? (silverData.price * usdToPln / 31.1035) : 0;
-        
-        // Get other currencies from NBP
-        const response = await fetch('https://api.nbp.pl/api/exchangerates/tables/A/');
-        const data = await response.json();
-        const rates = data[0].rates;
+        const data = await currencyService.fetchAllRates();
         
         // Update last update time
         const lastUpdated = document.getElementById('last-updated');
@@ -103,14 +58,10 @@ async function fetchExchangeRates() {
             lastUpdated.textContent = new Date().toLocaleString('pl-PL');
         }
         
-        // Process and display rates
-        let html = '';
-        
         // Update currency select options
         const currencySelect = document.getElementById('currency-select');
-        if (currencySelect && currencySelect.options.length <= 1) { // Only add once
-            currencies.forEach(currency => {
-                // Include all currencies including BTC
+        if (currencySelect && currencySelect.options.length <= 1) {
+            currencyService.getCurrencies().forEach(currency => {
                 const option = document.createElement('option');
                 option.value = currency.code;
                 option.textContent = `${currency.flag} ${currency.code} - ${currency.name}`;
@@ -120,119 +71,31 @@ async function fetchExchangeRates() {
 
         // Reset current rates
         currentRates = {};
+        let html = '';
         
         // Process each currency for the grid
-        currencies.forEach(currency => {
-            if (currency.isCrypto) {
-                // Handle crypto currencies
-                const rate = currency.code === 'BTC' ? btcRate : 
-                            currency.code === 'ETH' ? btcRate * 0.06 : 0; // Przykładowy kurs ETH
-                
-                // Calculate change based on previous rate
-                let change = 0;
-                if (previousRates[currency.code]) {
-                    // If we have a previous rate, calculate the change
-                    change = calculateChange(rate, previousRates[currency.code]);
-                } else if (previousRates[currency.code] === 0) {
-                    // If previous rate was 0, set change to 0
-                    change = 0;
-                } else {
-                    // No previous rate, set to 0% change
-                    change = 0;
-                }
-                
-                // Store current rate for next time
-                currentRates[currency.code] = rate;
-                
-                html += createCurrencyItem({
-                    ...currency,
-                    rate: rate,
-                    change: change
-                });
-            } else if (currency.isMetal) {
-                // Handle precious metals
-                let rate = 0;
-                if (currency.code === 'XAU') {
-                    rate = goldPricePerGram;
-                } else if (currency.code === 'XAG') {
-                    rate = silverPricePerGram;
-                }
-                
-                // Calculate change based on previous rate
-                let change = 0;
-                if (previousRates[currency.code]) {
-                    change = calculateChange(rate, previousRates[currency.code]);
-                } else if (previousRates[currency.code] === 0) {
-                    change = 0;
-                } else {
-                    change = 0;
-                }
-                
-                // Store current rate for next time
-                currentRates[currency.code] = rate;
-                
-                html += createCurrencyItem({
-                    ...currency,
-                    rate: rate,
-                    change: change,
-                    symbol: 'zł' // Złoty symbol for metals
-                });
-            } else if (currency.isStock) {
-                // Handle stocks
-                if (currency.code === 'NVDA' && nvdaPrice) {
-                    let change = 0;
-                    if (previousRates['NVDA']) {
-                        change = calculateChange(nvdaPrice, previousRates['NVDA']);
-                    } else if (previousRates['NVDA'] === 0) {
-                        change = 0;
-                    } else {
-                        change = 0;
-                    }
-                    
-                    // Store current rate for next time
-                    currentRates['NVDA'] = nvdaPrice;
-                    
-                    html += createCurrencyItem({
-                        ...currency,
-                        rate: nvdaPrice,
-                        change: change,
-                        symbol: '$', // Dodajemy symbol waluty dla akcji
-                        isStock: true
-                    });
-                }
-            } else {
-                // Handle fiat currencies
-                const rateData = rates.find(r => r.code === currency.code);
-                if (rateData) {
-                    const amount = currency.amount || 1;
-                    const rate = rateData.mid / (currency.amount ? rateData.amount : 1);
-                    
-                    // Calculate change based on previous rate
-                    let change = 0;
-                    if (previousRates[currency.code]) {
-                        change = calculateChange(rate, previousRates[currency.code]);
-                    } else if (previousRates[currency.code] === 0) {
-                        change = 0;
-                    } else {
-                        change = 0;
-                    }
-                    
-                    // Store current rate for next time
-                    currentRates[currency.code] = rate;
-                    
-                    html += createCurrencyItem({
-                        ...currency,
-                        rate: rate,
-                        change: change,
-                        amount: amount
-                    });
-                }
+        currencyService.getCurrencies().forEach(currency => {
+            const rate = currencyService.calculateRate(currency, data);
+
+            // Calculate change based on previous rate
+            let change = 0;
+            if (previousRates[currency.code]) {
+                change = calculateChange(rate, previousRates[currency.code]);
             }
+
+            // Store current rate for next time
+            currentRates[currency.code] = rate;
+
+            html += createCurrencyItem({
+                ...currency,
+                rate: rate,
+                change: change,
+                symbol: (currency.isStock) ? '$' : (currency.isMetal ? 'zł' : undefined)
+            });
         });
         
         if (currencyGrid) {
             currencyGrid.innerHTML = html;
-            // Save the current rates for next time
             saveCurrentRates();
         }
     } catch (error) {
@@ -250,9 +113,8 @@ function createCurrencyItem({ code, name, flag, rate, change = 0, amount = 1, sy
     const changeSymbol = change > 0 ? '↑' : change < 0 ? '↓' : '';
     const changeText = change !== 0 ? 
         `${changeSymbol} ${Math.abs(change).toFixed(2)}%` : 
-        `${changeSymbol} 0.00%`; // Show 0.00% instead of just a dash
+        `${changeSymbol} 0.00%`;
     
-    // Domyślna waluta to PLN, chyba że to akcja (wtedy $) lub inna waluta
     const currencySymbol = isStock ? '$' : (symbol || 'PLN');
     const displayValue = isStock ? 
         `${currencySymbol}${displayRate}` : 
@@ -270,19 +132,8 @@ function createCurrencyItem({ code, name, flag, rate, change = 0, amount = 1, sy
 }
 
 function calculateChange(currentRate, previousRate) {
+    if (!previousRate) return 0;
     return ((currentRate - previousRate) / previousRate) * 100;
-}
-
-// Helper function to get USD to PLN rate
-async function getUsdToPlnRate() {
-    try {
-        const response = await fetch('https://api.nbp.pl/api/exchangerates/rates/a/usd/');
-        const data = await response.json();
-        return data.rates?.[0]?.mid || 4.0; // Default to 4.0 if API call fails
-    } catch (error) {
-        console.error('Error fetching USD/PLN rate:', error);
-        return 4.0; // Fallback rate
-    }
 }
 
 // Format date for display
@@ -294,106 +145,9 @@ function formatDate(date) {
     });
 }
 
-// Fetch historical rates
-async function fetchHistoricalRates(currencyCode, days) {
-    try {
-        console.log(`Fetching historical rates for ${currencyCode} for the last ${days} days`);
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(endDate.getDate() - days);
-        
-        const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
-        
-        console.log(`Date range: ${startDateStr} to ${endDateStr}`);
-        
-        let rates = [];
-        
-        // For NVDA stock
-        if (currencyCode === 'NVDA') {
-            const response = await fetch(`https://api.coingecko.com/api/v3/coins/nvidia/market_chart/range?vs_currency=usd&from=${Math.floor(startDate.getTime() / 1000)}&to=${Math.floor(endDate.getTime() / 1000)}`);
-            const data = await response.json();
-            
-            if (!data.prices || !Array.isArray(data.prices)) {
-                console.error('Invalid data format for NVDA from CoinGecko API');
-                return [];
-            }
-            
-            // Pobieramy tylko jedną wartość dziennie (pierwszą z danego dnia)
-            const dailyPrices = {};
-            data.prices.forEach(priceData => {
-                const date = new Date(priceData[0]).toISOString().split('T')[0];
-                if (!dailyPrices[date]) {
-                    dailyPrices[date] = priceData[1];
-                }
-            });
-            
-            // Konwertujemy obiekt z powrotem na tablicę
-            rates = Object.entries(dailyPrices).map(([date, value]) => ({
-                date: date,
-                value: value
-            }));
-            
-            console.log(`Fetched ${rates.length} NVDA rate points`);
-            return rates;
-        }
-        
-        // For BTC, use CoinGecko API
-        if (currencyCode === 'BTC') {
-            console.log('Fetching BTC data from CoinGecko...');
-            const response = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=pln&from=${Math.floor(startDate.getTime() / 1000)}&to=${Math.floor(endDate.getTime() / 1000)}`);
-            const data = await response.json();
-            console.log('CoinGecko API response:', data);
-            
-            if (!data.prices || !Array.isArray(data.prices)) {
-                console.error('Invalid data format from CoinGecko API');
-                return [];
-            }
-            
-            rates = data.prices.map(priceData => ({
-                date: new Date(priceData[0]).toISOString().split('T')[0],
-                value: priceData[1]
-            }));
-        } else {
-            // For other currencies, use NBP API
-            console.log(`Fetching ${currencyCode} data from NBP...`);
-            const response = await fetch(`https://api.nbp.pl/api/exchangerates/rates/A/${currencyCode}/${startDateStr}/${endDateStr}/?format=json`);
-            const data = await response.json();
-            console.log('NBP API response:', data);
-            
-            if (!data.rates || !Array.isArray(data.rates) || data.rates.length === 0) {
-                console.error('No rates data received from NBP API');
-                return [];
-            }
-            
-            rates = data.rates.map(rate => ({
-                date: rate.effectiveDate,
-                value: rate.mid
-            }));
-        }
-        
-        console.log(`Fetched ${rates.length} rate points for ${currencyCode}`);
-        return rates;
-    } catch (error) {
-        console.error('Error fetching historical rates:', error);
-        return [];
-    }
-}
-
 // Update chart with historical data
 async function updateChart(currencyCode, days) {
     console.log(`[Chart] Updating chart for ${currencyCode}, ${days} days`);
-    const chartContainer = document.getElementById('chart-view');
-    
-    // Show loading state
-    chartContainer.innerHTML = `
-        <div class="chart-loading">
-            <i class="fas fa-spinner fa-spin"></i> Ładowanie danych wykresu...
-        </div>
-        <div class="chart-container" style="width: 100%; height: 100%;">
-            <canvas id="currency-chart" style="display: none;"></canvas>
-        </div>
-    `;
     
     const chartCanvas = document.getElementById('currency-chart');
     if (!chartCanvas) {
@@ -402,55 +156,31 @@ async function updateChart(currencyCode, days) {
     }
     
     const ctx = chartCanvas.getContext('2d');
-    const currency = currencies.find(c => c.code === currencyCode);
+    const currency = currencyService.getCurrencies().find(c => c.code === currencyCode);
     
     if (!currency) {
-        const errorMsg = `Nie znaleziono waluty: ${currencyCode}`;
-        console.error(`[Chart] ${errorMsg}`);
-        chartContainer.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i> ${errorMsg}
-            </div>
-        `;
+        console.error(`[Chart] Currency not found: ${currencyCode}`);
         return;
     }
     
     try {
-        console.log(`[Chart] Fetching rates for ${currencyCode}...`);
-        const rates = await fetchHistoricalRates(currencyCode, days);
-        console.log(`[Chart] Received ${rates.length} data points`);
+        // We assume the container handles the loading spinner if needed.
+        // Since we are potentially redrawing the chart, we don't want to flicker too much.
+        
+        const rates = await currencyService.getHistoricalRates(currencyCode, days);
         
         if (rates.length === 0) {
-            throw new Error('Brak danych historycznych');
+            console.warn('No historical data');
+            return;
         }
         
-        // Show chart and hide loading
-        const loadingElement = chartContainer.querySelector('.chart-loading');
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
-        
-        // Make sure canvas is visible and properly sized
-        chartCanvas.style.display = 'block';
-        chartCanvas.style.width = '100%';
-        chartCanvas.style.height = '100%';
-        
-        // Prepare data
         const labels = rates.map(rate => formatDate(rate.date));
         const data = rates.map(rate => currency.amount ? rate.value / currency.amount : rate.value);
         
-        console.log('[Chart] Data prepared:', { 
-            labels: labels.slice(0, 5).join(', ') + (labels.length > 5 ? ', ...' : ''), 
-            values: data.slice(0, 5).map(v => v.toFixed(4)).join(', ') + (data.length > 5 ? ', ...' : '')
-        });
-        
-        // Destroy existing chart if it exists
         if (currencyChart) {
-            console.log('[Chart] Destroying existing chart');
             currencyChart.destroy();
         }
         
-        console.log('[Chart] Creating new chart instance');
         currencyChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -476,9 +206,7 @@ async function updateChart(currencyCode, days) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
                         backgroundColor: 'rgba(20, 26, 36, 0.9)',
                         titleColor: '#fff',
@@ -488,180 +216,83 @@ async function updateChart(currencyCode, days) {
                         displayColors: false,
                         callbacks: {
                             label: function(context) {
-                                return `${context.parsed.y.toFixed(4)} PLN`;
+                                return `${context.parsed.y.toFixed(4)} ${currency.isStock ? 'USD' : 'PLN'}`;
                             }
                         }
                     }
                 },
                 scales: {
                     x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
-                        },
-                        ticks: {
-                            color: 'rgba(255, 255, 255, 0.6)',
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: 'rgba(255, 255, 255, 0.6)', maxRotation: 45, minRotation: 45 }
                     },
                     y: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
-                        },
-                        ticks: {
-                            color: 'rgba(255, 255, 255, 0.6)',
-                            callback: function(value) {
-                                return value.toFixed(4);
-                            }
-                        }
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: 'rgba(255, 255, 255, 0.6)' }
                     }
                 },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                animation: {
-                    duration: 1000,
-                    easing: 'easeInOutQuart'
-                },
-                elements: {
-                    line: {
-                        borderWidth: 2
-                    },
-                    point: {
-                        radius: 0,
-                        hoverRadius: 6
-                    }
-                },
-                layout: {
-                    padding: {
-                        top: 10,
-                        right: 15,
-                        bottom: 10,
-                        left: 10
-                    }
-                }
+                interaction: { intersect: false, mode: 'index' },
+                animation: { duration: 1000, easing: 'easeInOutQuart' },
+                layout: { padding: { top: 10, right: 15, bottom: 10, left: 10 } }
             }
-        }
-    );
+        });
     } catch (error) {
         console.error('[Chart] Error updating chart:', error);
-        const chartContainer = document.getElementById('chart-view');
-        chartContainer.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i> Wystąpił błąd podczas ładowania wykresu: ${error.message || 'Nieznany błąd'}
-            </div>
-        `;
     }
 }
 
 // Initial load
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded: Initializing...');
-    
-    // Initialize elements
     const chartView = document.getElementById('chart-view');
     const currencyGrid = document.getElementById('currency-grid');
     
-    if (!chartView || !currencyGrid) {
-        console.error('Required elements not found!', { chartView: !!chartView, currencyGrid: !!currencyGrid });
-        return;
-    }
+    if (!chartView || !currencyGrid) return;
     
-    // Initially hide the chart view
     chartView.style.display = 'none';
     
-    // Initial data load with retry logic
     function initializeData(retryCount = 0) {
         const maxRetries = 3;
-        
         fetchExchangeRates()
             .then(() => {
-                console.log('Rates loaded, setting up chart view...');
-                // Give the DOM a moment to update
-                setTimeout(() => {
-                    setupChartView();
-                }, 100);
+                setTimeout(() => setupChartView(), 100);
             })
             .catch(error => {
-                console.error('Error initializing currency data:', error);
                 if (retryCount < maxRetries) {
-                    console.log(`Retrying... (${retryCount + 1}/${maxRetries})`);
                     setTimeout(() => initializeData(retryCount + 1), 1000 * (retryCount + 1));
                 }
             });
     }
     
-    // Start the initialization
     initializeData();
     
-    // Set up refresh button
     document.getElementById('refresh-rates').addEventListener('click', () => {
         fetchExchangeRates().catch(console.error);
     });
     
-    // Auto-refresh every 5 minutes
     setInterval(() => {
         fetchExchangeRates().catch(console.error);
     }, 5 * 60 * 1000);
     
     function setupChartView() {
-        console.log('setupChartView called');
         const currencySelect = document.getElementById('currency-select');
-        const chartView = document.getElementById('chart-view');
         
-        if (!currencySelect) {
-            console.error('Currency select element not found in setupChartView!');
-            console.log('Current chart-view content:', chartView?.innerHTML);
-            console.log('Document body:', document.body.innerHTML);
-            return;
-        }
-        
-        console.log('Currency select found, proceeding with chart setup');
-        
-        console.log('Available currencies:', Array.from(currencySelect.options).map(o => o.value));
-        
-        // If no currency is selected yet, select the first available one
-        if (currencySelect.options.length > 1) {
+        if (currencySelect && currencySelect.options.length > 1) {
             if (!currentCurrency || !Array.from(currencySelect.options).some(o => o.value === currentCurrency)) {
                 currentCurrency = currencySelect.options[1].value;
-                console.log('Setting initial currency to:', currentCurrency);
             }
             currencySelect.value = currentCurrency;
             
-            // Add event listener for currency change
             if (!currencySelect._hasChangeListener) {
                 currencySelect.addEventListener('change', (e) => {
                     currentCurrency = e.target.value;
-                    console.log('Currency changed to:', currentCurrency);
                     updateChart(currentCurrency, currentDays).catch(console.error);
                 });
                 currencySelect._hasChangeListener = true;
             }
-            
-            // Add event listeners for period buttons using event delegation
-            const chartView = document.getElementById('chart-view');
-            if (chartView) {
-                chartView.addEventListener('click', (e) => {
-                    const periodBtn = e.target.closest('.period-btn');
-                    if (periodBtn) {
-                        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-                        periodBtn.classList.add('active');
-                        currentDays = parseInt(periodBtn.dataset.days);
-                        console.log('Period changed to:', currentDays, 'days');
-                        updateChart(currentCurrency, currentDays).catch(console.error);
-                    }
-                });
-            }
-            
-            // Initialize the chart
-            console.log('Calling updateChart with:', { currency: currentCurrency, days: currentDays });
-            updateChart(currentCurrency, currentDays).catch(error => {
-                console.error('Error in initial chart update:', error);
-            });
+            // Note: Period buttons are handled via event delegation in showChartView or directly if static.
+            // But since showChartView overwrites HTML, we must re-attach or use a stable container.
+            // Current implementation re-attaches in showChartView.
         } else {
-            console.warn('No currency options available yet');
-            // Try again after a short delay if no options are available yet
             setTimeout(() => {
                 if (document.getElementById('currency-select')?.options.length > 1) {
                     setupChartView();
@@ -671,25 +302,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function showChartView() {
-        console.log('showChartView called');
         const chartView = document.getElementById('chart-view');
         const currencyGrid = document.getElementById('currency-grid');
         
-        if (!chartView || !currencyGrid) {
-            console.error('Required elements not found in showChartView');
-            return;
-        }
-        
-        // First hide the grid and show the chart view
         currencyGrid.classList.add('hidden');
-        chartView.style.display = 'block'; // Make sure it's visible
+        chartView.style.display = 'block';
+        chartView.classList.remove('hidden');
         
-        // Get the current currency name and flag
-        const currency = currencies.find(c => c.code === currentCurrency);
+        const currency = currencyService.getCurrencies().find(c => c.code === currentCurrency);
         const currencyName = currency ? currency.name : '';
         const currencyFlag = currency ? currency.flag : '';
         
-        // Create the chart HTML structure with back button
+        // Ensure HTML structure includes canvas
         const chartHTML = `
             <div class="chart-header">
                 <button id="back-to-grid" class="back-button">
@@ -702,47 +326,37 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="chart-controls">
                 <div class="chart-period">
-                    <button class="period-btn active" data-days="7">7 dni</button>
-                    <button class="period-btn" data-days="14">14 dni</button>
-                    <button class="period-btn" data-days="30">30 dni</button>
+                    <button class="period-btn ${currentDays === 7 ? 'active' : ''}" data-days="7">7 dni</button>
+                    <button class="period-btn ${currentDays === 14 ? 'active' : ''}" data-days="14">14 dni</button>
+                    <button class="period-btn ${currentDays === 30 ? 'active' : ''}" data-days="30">30 dni</button>
                 </div>
             </div>
         `;
         
-        console.log('Setting chart view HTML...');
         chartView.innerHTML = chartHTML;
         
-        // Verify the select element was created
-        const checkSelect = () => {
-            const select = document.getElementById('currency-select');
-            if (select) {
-                console.log('Currency select found, proceeding with setupChartView');
-                console.log('Select element:', select);
-                console.log('Options:', Array.from(select.options).map(o => o.value));
-                setupChartView();
-            } else {
-                console.error('Currency select still not found, retrying...');
-                console.log('Current chart view content:', chartView.innerHTML);
-                setTimeout(checkSelect, 100);
-            }
-        };
-        
-        // Set up back button
         document.getElementById('back-to-grid').addEventListener('click', () => {
             chartView.style.display = 'none';
+            chartView.classList.add('hidden');
             currencyGrid.classList.remove('hidden');
         });
         
-        // Initialize the chart with the current currency
-        updateChart(currentCurrency, currentDays).catch(console.error);
-    }
-    
-    function showGridView() {
-        document.getElementById('currency-grid').classList.remove('hidden');
-        document.getElementById('chart-view').classList.add('hidden');
+        // Re-attach period listeners
+        chartView.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                chartView.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentDays = parseInt(btn.dataset.days);
+                updateChart(currentCurrency, currentDays);
+            });
+        });
+
+        // Small delay to ensure canvas is in DOM before chart.js tries to access it
+        setTimeout(() => {
+             updateChart(currentCurrency, currentDays).catch(console.error);
+        }, 0);
     }
 
-        // Handle currency item clicks
     document.addEventListener('click', (e) => {
         const currencyItem = e.target.closest('.currency-item');
         if (currencyItem) {
@@ -752,25 +366,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 showChartView();
             }
         }
-    });
-
-    // Currency select change
-    document.getElementById('currency-select').addEventListener('change', (e) => {
-        currentCurrency = e.target.value;
-        if (currentCurrency) {
-            updateChart(currentCurrency, currentDays);
-        }
-    });
-
-    // Period buttons
-    document.querySelectorAll('.period-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentDays = parseInt(btn.dataset.days);
-            if (currentCurrency) {
-                updateChart(currentCurrency, currentDays);
-            }
-        });
     });
 });
