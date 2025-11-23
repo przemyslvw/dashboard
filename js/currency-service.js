@@ -1,193 +1,187 @@
 class CurrencyService {
     constructor() {
-        this.currencies = [
-            { code: 'XAU', name: 'Złoto (1g)', flag: '🥇', isMetal: true },
-            { code: 'XAG', name: 'Srebro (1g)', flag: '🥈', isMetal: true },
-            { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-            { code: 'USD', name: 'Dolar amerykański', flag: '🇺🇸' },
-            { code: 'COP', name: 'Peso kolumbijskie', flag: '🇨🇴' },
-            { code: 'GBP', name: 'Funt brytyjski', flag: '🇬🇧' },
-            { code: 'CHF', name: 'Frank szwajcarski', flag: '🇨🇭' },
-            { code: 'JPY', name: 'Jen japoński', flag: '🇯🇵'},
-            { code: 'AUD', name: 'Dolar australijski', flag: '🇦🇺' },
-            { code: 'CNY', name: 'Juan chiński', flag: '🇨🇳' },
-            { code: 'NOK', name: 'Korona norweska', flag: '🇳🇴' },
-            { code: 'SEK', name: 'Korona szwedzka', flag: '🇸🇪' },
-            { code: 'BTC', name: 'Bitcoin', flag: '₿', isCrypto: true },
-            { code: 'ETH', name: 'Ethereum', flag: '⟠', isCrypto: true },
-            { code: 'NVDA', name: 'Nvidia Corp', flag: '🎮', isStock: true }
-        ];
+        this.config = CurrencyConfig;
     }
 
     getCurrencies() {
-        return this.currencies;
+        return this.config.currencies;
     }
 
     async fetchAllRates() {
-        // Define endpoints
-        const endpoints = {
-            btc: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=pln',
-            nvda: 'https://api.coingecko.com/api/v3/simple/price?ids=nvidia&vs_currencies=usd',
-            gold: 'https://api.nbp.pl/api/cenyzlota',
-            silver: 'https://api.metals.live/v1/spot/silver',
-            nbp: 'https://api.nbp.pl/api/exchangerates/tables/A/',
-            usd: 'https://api.nbp.pl/api/exchangerates/rates/a/usd/'
-        };
-
-        // Fetch all concurrently with error handling for each
-        const promises = Object.entries(endpoints).map(async ([key, url]) => {
+        // Fetch all endpoints defined in config
+        const fetchPromises = Object.entries(this.config.endpoints).map(async ([key, url]) => {
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
                     console.warn(`[CurrencyService] Failed to fetch ${key}: ${response.status} ${response.statusText}`);
-                    return null;
+                    return [key, null];
                 }
-                return { key, data: await response.json() };
+                return [key, await response.json()];
             } catch (e) {
                 console.warn(`[CurrencyService] Network error fetching ${key}:`, e);
-                return null;
+                return [key, null];
             }
         });
 
-        const resultsArr = await Promise.all(promises);
+        const resultsArr = await Promise.all(fetchPromises);
+        const results = Object.fromEntries(resultsArr);
 
-        // Convert array of results to a map
-        const dataMap = resultsArr.reduce((acc, item) => {
-            if (item) acc[item.key] = item.data;
-            return acc;
-        }, {});
+        // Get helper rates (USD is needed for conversions)
+        const usdRate = this._parseNbpRate(results['nbp_usd']) || this.config.constants.defaultUsdRate;
 
-        // Check if we have at least some data to work with
-        if (Object.keys(dataMap).length === 0) {
-            throw new Error('Failed to fetch any currency data');
-        }
+        const processedRates = {};
 
-        const results = {};
+        this.config.currencies.forEach(currency => {
+            let rate = 0;
 
-        // Defaults and Helper Values
-        const usdToPln = dataMap.usd?.rates?.[0]?.mid || 4.0;
-        const nbpRates = dataMap.nbp?.[0]?.rates || [];
+            try {
+                if (currency.provider === 'nbp') {
+                    rate = this._parseNBPTable(results['nbp_table_a'], currency.code);
+                } else if (currency.provider.startsWith('coingecko')) {
+                    const targetCurrency = currency.type === 'stock' ? 'usd' : 'pln';
+                    let rawRate = this._parseCoinGecko(results[currency.provider], currency.apiId, targetCurrency);
 
-        // Process Specific Assets
+                    if (currency.type === 'stock') {
+                        // Convert USD stock price to PLN
+                        rate = rawRate * usdRate;
+                    } else {
+                        rate = rawRate;
+                    }
+                } else if (currency.provider === 'nbp_gold') {
+                    rate = this._parseNBPGold(results['nbp_gold']);
+                } else if (currency.provider === 'metals_silver') {
+                    const priceUsdOz = results['metals_silver']?.price || 0;
+                    if (priceUsdOz) {
+                        rate = (priceUsdOz * usdRate / this.config.constants.silverToGram);
+                    }
+                }
 
-        // BTC & ETH
-        results['BTC'] = dataMap.btc?.bitcoin?.pln || 0;
-        results['ETH'] = (results['BTC'] || 0) * 0.06;
+                // Fallback for ETH if direct fetch failed (Legacy support)
+                if (currency.code === 'ETH' && !rate) {
+                    const btcRate = processedRates['BTC'] || 0;
+                    rate = btcRate * this.config.constants.ethBtcRatio;
+                }
+            } catch (e) {
+                console.warn(`Error processing rate for ${currency.code}`, e);
+            }
 
-        // NVDA
-        results['NVDA'] = dataMap.nvda?.nvidia?.usd || 0;
-
-        // Gold (1g PLN)
-        results['XAU'] = dataMap.gold?.[0]?.cena || 0;
-
-        // Silver (USD/oz -> PLN/g)
-        const silverPriceUsdOz = dataMap.silver?.price || 0;
-        results['XAG'] = (silverPriceUsdOz * usdToPln / 31.1035);
-
-        // Process NBP currencies
-        nbpRates.forEach(rateData => {
-            results[rateData.code] = rateData.mid;
+            processedRates[currency.code] = rate;
         });
 
         return {
-            rates: results,
-            rawNbpRates: nbpRates,
+            rates: processedRates,
             timestamp: Date.now()
         };
     }
 
     calculateRate(currency, fetchedData) {
-        const { rates, rawNbpRates } = fetchedData;
-
-        if (currency.isCrypto) {
-            return rates[currency.code] || 0;
-        }
-
-        if (currency.isMetal) {
-            return rates[currency.code] || 0;
-        }
-
-        if (currency.isStock) {
-            return rates[currency.code] || 0;
-        }
-
-        // Fiat
-        // First try the processed rates map
-        if (rates[currency.code]) {
-            return rates[currency.code];
-        }
-
-        // Fallback to raw search if needed (redundant if logic above is correct)
-        const rateData = rawNbpRates.find(r => r.code === currency.code);
-        if (rateData) {
-            return rateData.mid;
-        }
-
-        return 0;
+        return fetchedData.rates[currency.code] || 0;
     }
 
+    // --- Parsing Strategies ---
+
+    _parseNBPTable(data, code) {
+        if (!data || !data[0] || !data[0].rates) return 0;
+        const rate = data[0].rates.find(r => r.code === code);
+        return rate ? rate.mid : 0;
+    }
+
+    _parseNbpRate(data) {
+        return data?.rates?.[0]?.mid || 0;
+    }
+
+    _parseNBPGold(data) {
+        return data && data[0] ? data[0].cena : 0;
+    }
+
+    _parseCoinGecko(data, id, vsCurrency) {
+        if (!data || !data[id]) return 0;
+        return data[id][vsCurrency] || 0;
+    }
+
+    // --- Historical Data ---
+
     async getHistoricalRates(currencyCode, days) {
+        const currency = this.config.currencies.find(c => c.code === currencyCode);
+        if (!currency) return [];
+
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - days);
+
+        const startDateStr = startDate.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
+
         try {
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(endDate.getDate() - days);
-
-            const startDateStr = startDate.toISOString().split('T')[0];
-            const endDateStr = endDate.toISOString().split('T')[0];
-
-            let rates = [];
-
-            if (currencyCode === 'NVDA') {
-                const response = await fetch(`https://api.coingecko.com/api/v3/coins/nvidia/market_chart/range?vs_currency=usd&from=${Math.floor(startDate.getTime() / 1000)}&to=${Math.floor(endDate.getTime() / 1000)}`);
-                if (!response.ok) throw new Error('CoinGecko NVDA error');
-                const data = await response.json();
-
-                if (data.prices && Array.isArray(data.prices)) {
-                    const dailyPrices = {};
-                    data.prices.forEach(priceData => {
-                        const date = new Date(priceData[0]).toISOString().split('T')[0];
-                        if (!dailyPrices[date]) {
-                            dailyPrices[date] = priceData[1];
-                        }
-                    });
-
-                    rates = Object.entries(dailyPrices).map(([date, value]) => ({
-                        date: date,
-                        value: value
-                    }));
-                }
-            } else if (currencyCode === 'BTC') {
-                const response = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range?vs_currency=pln&from=${Math.floor(startDate.getTime() / 1000)}&to=${Math.floor(endDate.getTime() / 1000)}`);
-                if (!response.ok) throw new Error('CoinGecko BTC error');
-                const data = await response.json();
-
-                if (data.prices && Array.isArray(data.prices)) {
-                    rates = data.prices.map(priceData => ({
-                        date: new Date(priceData[0]).toISOString().split('T')[0],
-                        value: priceData[1]
-                    }));
-                }
-            } else {
-                // NBP
-                const response = await fetch(`https://api.nbp.pl/api/exchangerates/rates/A/${currencyCode}/${startDateStr}/${endDateStr}/?format=json`);
-                if (!response.ok) throw new Error('NBP API error');
-                const data = await response.json();
-
-                if (data.rates && Array.isArray(data.rates)) {
-                    rates = data.rates.map(rate => ({
-                        date: rate.effectiveDate,
-                        value: rate.mid
-                    }));
-                }
+            if (currency.type === 'crypto' || currency.type === 'stock') {
+                return await this._fetchCoinGeckoHistory(currency, startDate, endDate);
+            } else if (currency.code === 'XAU') {
+                return await this._fetchNBPGoldHistory(startDateStr, endDateStr);
+            } else if (currency.provider === 'nbp') {
+                return await this._fetchNBPHistory(currency.code, startDateStr, endDateStr);
             }
-
-            return rates;
         } catch (error) {
-            console.error('Error fetching historical rates:', error);
+            console.error(`Error fetching historical rates for ${currencyCode}:`, error);
             return [];
         }
+        return [];
+    }
+
+    async _fetchCoinGeckoHistory(currency, startDate, endDate) {
+        const vsCurrency = currency.type === 'stock' ? 'usd' : 'pln';
+        const from = Math.floor(startDate.getTime() / 1000);
+        const to = Math.floor(endDate.getTime() / 1000);
+
+        const url = `${this.config.historicalEndpoints.coingecko}/${currency.apiId}/market_chart/range?vs_currency=${vsCurrency}&from=${from}&to=${to}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('CoinGecko API error');
+
+        const data = await response.json();
+        if (data.prices && Array.isArray(data.prices)) {
+            // Filter to one point per day to avoid noise
+            const dailyMap = new Map();
+            data.prices.forEach(([timestamp, price]) => {
+                const date = new Date(timestamp).toISOString().split('T')[0];
+                if (!dailyMap.has(date)) {
+                    dailyMap.set(date, price);
+                }
+            });
+
+            return Array.from(dailyMap.entries()).map(([date, value]) => ({ date, value }));
+        }
+        return [];
+    }
+
+    async _fetchNBPHistory(code, startDateStr, endDateStr) {
+        const url = `${this.config.historicalEndpoints.nbp}/${code}/${startDateStr}/${endDateStr}/?format=json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('NBP API error');
+
+        const data = await response.json();
+        if (data.rates && Array.isArray(data.rates)) {
+            return data.rates.map(rate => ({
+                date: rate.effectiveDate,
+                value: rate.mid
+            }));
+        }
+        return [];
+    }
+
+    async _fetchNBPGoldHistory(startDateStr, endDateStr) {
+        const url = `https://api.nbp.pl/api/cenyzlota/${startDateStr}/${endDateStr}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('NBP Gold API error');
+
+        const data = await response.json();
+        if (Array.isArray(data)) {
+            return data.map(item => ({
+                date: item.data,
+                value: item.cena
+            }));
+        }
+        return [];
     }
 }
 
-// Create a global instance
+// Global instance
 const currencyService = new CurrencyService();
