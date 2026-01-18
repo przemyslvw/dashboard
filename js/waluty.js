@@ -121,7 +121,17 @@ class CurrencyApp {
     }
 
     renderCurrencyItem(currency, rate, change) {
-        const displayRate = rate ? rate.toFixed(2) : '0.00';
+        let displayRate = '0.00';
+        if (rate) {
+            if (rate < 0.01) {
+                displayRate = rate.toFixed(6);
+            } else if (rate < 1) {
+                displayRate = rate.toFixed(4);
+            } else {
+                displayRate = rate.toFixed(2);
+            }
+        }
+
         const changeClass = change > 0 ? 'positive' : change < 0 ? 'negative' : '';
         const changeSymbol = change > 0 ? '↑' : change < 0 ? '↓' : '';
         const currencySymbol = currency.type === 'stock' ? '$' : (currency.type === 'metal' ? 'zł' : 'PLN');
